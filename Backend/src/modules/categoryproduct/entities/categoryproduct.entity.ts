@@ -1,23 +1,35 @@
 import { Category } from 'src/modules/category/entities/category.entity';
 import { Product } from 'src/modules/product/entities/product.entity';
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, JoinColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  JoinColumn,
+} from 'typeorm';
 
 @Entity({ name: 'category_product' })
 export class CategoryProduct {
   @PrimaryGeneratedColumn('increment', { name: 'id' })
   id: number;
 
-  @Column({ name: 'category_id', type: 'int' })
+  @Column({ name: 'categoryId', type: 'int', nullable: true })
   categoryId: number;
 
-  @Column({ name: 'product_id', type: 'int' })
+  @Column({ name: 'productId', type: 'int', nullable: true })
   productId: number;
 
-  @ManyToOne(() => Category, { eager: true })
-  @JoinColumn({ name: 'category_id' })
+  @ManyToOne(() => Category, (category) => category.categoryProducts, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   category: Category;
 
-  @ManyToOne(() => Product, { eager: true })
-  @JoinColumn({ name: 'product_id' })
+  @ManyToOne(() => Product, (product) => product.categoryProducts, {
+    eager: true,
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   product: Product;
 }

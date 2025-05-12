@@ -1,11 +1,23 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { CategoryProduct } from 'src/modules/categoryproduct/entities/categoryproduct.entity';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+  BeforeInsert,
+  BeforeUpdate,
+  ManyToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
 
 @Entity({ name: 'category' })
 export class Category {
   @PrimaryGeneratedColumn('increment', { name: 'id' })
   id: number;
 
-  @Column({ name: 'parent_id', type: 'int', nullable: true })
+  @Column({ name: 'parentId', type: 'int', nullable: true })
   parentId: number;
 
   @Column({ type: 'varchar', length: 255 })
@@ -37,13 +49,18 @@ export class Category {
   })
   updatedAt: string;
 
-  @ManyToOne(() => Category, category => category.children, { nullable: true })
-  @JoinColumn({ name: 'parent_id' })
+  @ManyToOne(() => Category, (category) => category.children, {
+    nullable: true,
+  })
   parent: Category;
 
-  @OneToMany(() => Category, category => category.parent)
+  @OneToMany(() => Category, (category) => category.parent)
   children: Category[];
-
+  @OneToMany(
+    () => CategoryProduct,
+    (categoryProduct) => categoryProduct.category,
+  )
+  categoryProducts: CategoryProduct[];
   @BeforeInsert()
   setCreationDate() {
     this.createdAt = new Date().toISOString();
