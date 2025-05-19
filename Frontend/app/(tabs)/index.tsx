@@ -9,6 +9,7 @@ import ProductItem from "@/components/ProductItem";
 import { Colors } from "@/constants/Colors";
 import ProductList from "@/components/ProductList";
 import Categories from "@/components/Categories";
+import { Personal_IP } from "@/constants/ip";
 
 type Props = {};
 
@@ -22,29 +23,31 @@ const HomeScreen = (props: Props) => {
   }, []);
 
   const getProducts = async () => {
-    const URL = "http://localhost:3000/product/get-all-products";
+    const URL = "http://" + Personal_IP.data + ":3000/product/get-all-products";
     const response = await axios.get(URL).catch((error) => {
       console.log(
         "There has been a problem with your fetch operation: " + error.message
       );
       throw error;
     });
-    console.log(response.data);
-    setProducts(response.data);
+    setProducts(response.data.data);
     setIsLoading(false);
   };
+
   const getCategories = async () => {
-    const URL = "https://localhost:3000/api/Category";
+    const URL =
+      "http://" + Personal_IP.data + ":3000/category/get-all-categories";
     const response = await axios.get(URL).catch((error) => {
       console.log(
         "There has been a problem with your fetch operation: " + error.message
       );
       throw error;
     });
-    console.log(response.data);
-    setCategories(response.data);
+    setCategories(response.data.data);
     setIsLoading(false);
+    console.log("categories", response.data.data);
   };
+
   return (
     <>
       <Stack.Screen options={{ headerShown: true, header: () => <Header /> }} />

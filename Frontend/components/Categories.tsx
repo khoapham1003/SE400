@@ -15,6 +15,7 @@ type Props = {
 };
 
 const Categories = ({ categories }: Props) => {
+  console.log("categories", categories);
   return (
     <View>
       <View style={styles.titleWrapper}>
@@ -31,8 +32,8 @@ const Categories = ({ categories }: Props) => {
         renderItem={({ item, index }) => (
           <TouchableOpacity>
             <View style={styles.item}>
-              <Image source={{ uri: item.image }} style={styles.itemImg} />
-              <Text>{item.name}</Text>
+              {/* <Image source={{ uri: item.image }} style={styles.itemImg} /> */}
+              <Text>{item.title}</Text>
             </View>
           </TouchableOpacity>
         )}

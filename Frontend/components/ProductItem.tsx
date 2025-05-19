@@ -25,7 +25,7 @@ const ProductItem = ({ item, index }: Props) => {
       entering={FadeInDown.delay(300 + index * 100).duration(500)}
       style={styles.container}
     >
-      <Image source={{ uri: item.images[0] }} style={styles.productImg} />
+      <Image source={{ uri: item.picture }} style={styles.productImg} />
       <TouchableOpacity style={styles.bookmarkBtn}>
         <Ionicons name="heart-outline" size={22} color={Colors.black} />
       </TouchableOpacity>

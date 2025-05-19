@@ -1,10 +1,17 @@
 export interface ProductType {
   id: number;
   title: string;
+  slug: string;
+  content: string;
   price: number;
-  description: string;
-  images: string[];
-  category: Category;
+  quantity: number;
+  shop: boolean;
+  createdAt: string;
+  updatedAt: string;
+  discount: number;
+  startsAt: string;
+  endsAt: string;
+  picture: string;
 }
 
 interface Category {
@@ -15,8 +22,12 @@ interface Category {
 
 export interface CategoryType {
   id: number;
-  name: string;
-  image: string;
+  parentId: number | null;
+  title: string;
+  slug: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface CartItemType {
