@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, TouchableOpacity, ActivityIndicator, View } from "react-native";
+import { Image, StyleSheet, Text, ScrollView, TouchableOpacity, ActivityIndicator, View } from "react-native";
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { CategoryType, ProductType } from "@/types/type";
@@ -74,9 +74,14 @@ const HomeScreen = (props: Props) => {
   return (
     <>
       <Stack.Screen options={{ headerShown: true, header: () => <Header /> }} />
+      <ScrollView>
       <Categories categories={categories}></Categories>
       <FlashSale products={saleProducts}/>
-      <ProductList products={products} />
+      <View style={{marginHorizontal: 20, marginBottom: 10}}>
+        <Image source={require('@/assets/images/sale-banner.jpg')} style={{ width: '100%', height: 150, borderRadius: 15 }}/>
+      </View>
+      <ProductList products={products} flatlist={false} />
+      </ScrollView>
     </>
   );
 };
