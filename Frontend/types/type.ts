@@ -1,17 +1,17 @@
 export interface ProductType {
-  id: number;
-  title: string;
-  slug: string;
-  content: string;
-  price: number;
-  quantity: number;
-  shop: boolean;
-  createdAt: string;
-  updatedAt: string;
-  discount: number;
-  startsAt: string;
-  endsAt: string;
-  picture: string;
+   id?: number;
+   title?: string;
+   slug?: string;
+   content?: string;
+   price?: number;
+   quantity?: number;
+   shop?: boolean;
+   created_at?: string;  // Changed from createdAt
+   updated_at?: string;  // Changed from updatedAt
+   discount?: number;
+   starts_at?: string;   // Changed from startsAt
+   ends_at?: string;     // Changed from endsAt
+   picture?: string;
 }
 
 interface Category {

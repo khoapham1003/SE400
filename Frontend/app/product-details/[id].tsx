@@ -21,7 +21,7 @@ const ProductDetails = (props: Props) => {
             try {
                 const URL = `http://${Personal_IP.data}:3000/product/get-product/${id}`;
                 const response = await axios.get(URL);
-                setProduct(response.data);  // save response data in state
+                setProduct(response.data.data);  // save response data in state
                 setError(null);
             } catch (err) {
                 setError('Failed to load product details.');
