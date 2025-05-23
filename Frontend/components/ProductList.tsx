@@ -12,9 +12,10 @@ import { ProductType } from "@/types/type";
 
 type Props = {
   products: ProductType[];
+  flatlist?: boolean;
 };
 
-const ProductList = ({ products }: Props) => {
+const ProductList = ({ products, flatlist = true }: Props) => {
   return (
     <View style={styles.container}>
       <View style={styles.titleWrapper}>
@@ -23,18 +24,28 @@ const ProductList = ({ products }: Props) => {
           <Text style={styles.titleBtn}>See All</Text>
         </TouchableOpacity>
       </View>
-      <FlatList
-        data={products}
-        numColumns={2}
-        contentContainerStyle={{
-          justifyContent: "space-between",
-          marginBottom: 20,
-        }}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ index, item }) => (
-          <ProductItem item={item} index={index}></ProductItem>
-        )}
-      />
+      {flatlist ? (
+        <FlatList
+          data={products}
+          numColumns={2}
+          contentContainerStyle={{
+            justifyContent: "space-between",
+            marginBottom: 20,
+          }}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ index, item }) => (
+            <ProductItem item={item} index={index} />
+          )}
+        />
+      ) : (
+        <View style={styles.itemsWrapper}>
+          {products.map((item, index) => (
+            <View key={index} style={styles.productWrapper}>
+              <ProductItem item={item} index={index} />
+            </View>
+          ))}
+        </View>
+      )}
     </View>
   );
 };
@@ -62,4 +73,15 @@ const styles = StyleSheet.create({
     color: Colors.black,
     letterSpacing: 0.6,
   },
+  itemsWrapper:{
+      width: '100%',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      alignItems: 'stretch'
+  },
+  productWrapper: {
+      width: '50%',
+      paddingLeft: 5,
+      marginBottom: 20
+  }
 });

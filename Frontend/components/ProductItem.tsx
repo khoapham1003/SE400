@@ -11,6 +11,8 @@ import { ProductType } from "@/types/type";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import Animated, { FadeInDown } from "react-native-reanimated";
+import { Link } from "expo-router";
+
 
 type Props = {
   item: ProductType;
@@ -21,6 +23,8 @@ const width = Dimensions.get("window").width - 40;
 
 const ProductItem = ({ item, index }: Props) => {
   return (
+      <Link href={`/product-details/${item.id}`} asChild>
+      <TouchableOpacity>
     <Animated.View
       entering={FadeInDown.delay(300 + index * 100).duration(500)}
       style={styles.container}
@@ -38,6 +42,8 @@ const ProductItem = ({ item, index }: Props) => {
       </View>
       <Text style={styles.title}>{item.title}</Text>
     </Animated.View>
+    </TouchableOpacity>
+    </Link>
   );
 };
 
@@ -57,7 +63,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     right: 20,
     top: 20,
-    backgroundColor: "rgpa(255, 255, 255, 0.6)",
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
     borderRadius: 30,
     padding: 5,
   },

@@ -6,4 +6,6 @@ export const Colors = {
   white: '#fff',
   background: '#F4F4F4',
   highlight: '#F4CE14',
+  extraLightGray: '#D3D3D3',
+
 }
