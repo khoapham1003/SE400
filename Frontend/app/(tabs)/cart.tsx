@@ -75,9 +75,14 @@ const CartScreen = (props: Props) => {
 const CartItem = ({ item }: { item: CartItemType }) => {
   return (
     <View style={styles.itemWrapper}>
-      <Image source={{ uri: item.image }} style={styles.itemImg} />
+      <Image
+        source={{ uri: item.productVariant?.product?.picture }}
+        style={styles.itemImg}
+      />
       <View style={styles.itemInfoWrapper}>
-        <Text style={styles.itemText}>{item.title}</Text>
+        <Text style={styles.itemText}>
+          {item.productVariant?.product?.title}
+        </Text>
         <Text style={styles.itemText}>${item.price}</Text>
         <View style={styles.itemControlWrapper}>
           <TouchableOpacity>
