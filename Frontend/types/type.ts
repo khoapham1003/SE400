@@ -1,17 +1,17 @@
 export interface ProductType {
-   id?: number;
-   title?: string;
-   slug?: string;
-   content?: string;
-   price?: number;
-   quantity?: number;
-   shop?: boolean;
-   created_at?: string;  // Changed from createdAt
-   updated_at?: string;  // Changed from updatedAt
-   discount?: number;
-   starts_at?: string;   // Changed from startsAt
-   ends_at?: string;     // Changed from endsAt
-   picture?: string;
+  id?: number;
+  title?: string;
+  slug?: string;
+  content?: string;
+  price?: number;
+  quantity?: number;
+  shop?: boolean;
+  created_at?: string; // Changed from createdAt
+  updated_at?: string; // Changed from updatedAt
+  discount?: number;
+  starts_at?: string; // Changed from startsAt
+  ends_at?: string; // Changed from endsAt
+  picture?: string;
 }
 
 interface Category {
@@ -28,6 +28,7 @@ export interface CategoryType {
   content: string;
   createdAt: string;
   updatedAt: string;
+  picture?: string;
 }
 
 export interface CartItemType {
