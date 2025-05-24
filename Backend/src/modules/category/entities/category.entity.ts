@@ -29,6 +29,9 @@ export class Category {
   @Column({ type: 'text', nullable: true })
   content: string;
 
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  picture: string;
+
   @CreateDateColumn({
     name: 'created_at',
     type: 'datetime',

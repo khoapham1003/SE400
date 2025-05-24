@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, IsPositive } from 'class-validator';
+import { IsString, IsOptional, IsInt, IsPositive, MaxLength } from 'class-validator';
 
 export class UpdateCategoryDto {
   @IsOptional()
@@ -12,6 +12,11 @@ export class UpdateCategoryDto {
   @IsOptional()
   @IsString()
   content?: string;
+
+  @IsString()
+  @IsOptional()
+  @MaxLength(255)
+  picture?: string;
 
   @IsOptional()
   @IsInt()
