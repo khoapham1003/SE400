@@ -11,10 +11,14 @@ import { Stack } from "expo-router";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
+import { UserType } from "@/types/type";
 
-type Props = {};
+type Props = {
+  thisUser: UserType;
+};
 
-const ProfileScreen = (props: Props) => {
+const ProfileScreen = ({ thisUser }: Props) => {
+  console.log("thisUser", thisUser);
   const headerHeight = useHeaderHeight();
 
   return (
@@ -23,11 +27,15 @@ const ProfileScreen = (props: Props) => {
       <View style={[styles.container, { marginTop: headerHeight }]}>
         <View style={{ alignItems: "center" }}>
           <Image
+            style={styles.userImg}
             source={{
+              // uri: thisUser?.picture,
               uri: "https://xsgames.co/randomusers/avatar.php?g=pixel&key=1",
             }}
           />
-          <Text style={styles.userName}>PKBinnnn Name</Text>
+          <Text style={styles.userName}>
+            {thisUser?.firstName}|{"Temp Name"}
+          </Text>
         </View>
         <View style={styles.buttonWrapper}>
           <TouchableOpacity style={styles.button}>
@@ -35,33 +43,33 @@ const ProfileScreen = (props: Props) => {
             <Text style={styles.buttonText}>Your Order</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
-            <Ionicons name="heart-outline" size={20} color={Colors.black} />
-            <Text style={styles.buttonText}>Your Wishlist</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
             <Ionicons name="card-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Payment History</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.button}>
+            <Ionicons name="pencil-outline" size={20} color={Colors.black} />
+            <Text style={styles.buttonText}>Edit Profile</Text>
+          </TouchableOpacity>
+          {/* <TouchableOpacity style={styles.button}>
+            <Ionicons name="heart-outline" size={20} color={Colors.black} />
+            <Text style={styles.buttonText}>Your Wishlist</Text>
+          </TouchableOpacity> */}
+          {/* <TouchableOpacity style={styles.button}>
             <Ionicons name="gift-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Reward Point</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          </TouchableOpacity> */}
+          {/* <TouchableOpacity style={styles.button}>
             <Ionicons
               name="help-circle-outline"
               size={20}
               color={Colors.black}
             />
             <Text style={styles.buttonText}>Customer Support</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Ionicons name="pencil-outline" size={20} color={Colors.black} />
-            <Text style={styles.buttonText}>Edit Profile</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          </TouchableOpacity> */}
+          {/* <TouchableOpacity style={styles.button}>
             <Ionicons name="settings-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Settings</Text>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
           <TouchableOpacity style={styles.button}>
             <Ionicons name="log-out-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Logout</Text>
@@ -102,5 +110,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "400",
     color: Colors.black,
+  },
+  userImg: {
+    width: 100,
+    height: 100,
+    borderRadius: 100,
   },
 });

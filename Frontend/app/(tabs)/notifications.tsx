@@ -24,10 +24,11 @@ const NotificationsScreen = (props: Props) => {
     getNotifications();
   });
   const headerHeight = useHeaderHeight();
+  const userId = 1; //temp
 
   const getNotifications = async () => {
     const URL =
-      "http://" + Personal_IP.data + ":3000/category/get-all-notifications";
+      "http://" + Personal_IP.data + ":3000/orders/order-history/" + { userId };
     const response = await axios.get(URL).catch((error) => {
       console.log(
         "There has been a problem with your fetch operation: " + error.message

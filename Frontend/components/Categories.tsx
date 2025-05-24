@@ -32,7 +32,7 @@ const Categories = ({ categories }: Props) => {
         renderItem={({ item, index }) => (
           <TouchableOpacity>
             <View style={styles.item}>
-              {/* <Image source={{ uri: item.image }} style={styles.itemImg} /> */}
+              <Image source={{ uri: item.picture }} style={styles.itemImg} />
               <Text>{item.title}</Text>
             </View>
           </TouchableOpacity>
@@ -46,7 +46,7 @@ export default Categories;
 
 const styles = StyleSheet.create({
   container: {
-      marginBottom: 20
+    marginBottom: 20,
   },
   title: {
     fontSize: 18,

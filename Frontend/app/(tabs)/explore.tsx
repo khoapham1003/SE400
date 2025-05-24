@@ -4,13 +4,15 @@ import {
   Image,
   StyleSheet,
   Text,
+  Touchable,
+  TouchableOpacity,
   View,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { Personal_IP } from "@/constants/ip";
 import axios from "axios";
 import { CategoryType } from "@/types/type";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
 import Animated, { FadeInDown } from "react-native-reanimated";
@@ -20,6 +22,7 @@ type Props = {};
 const ExploreScreen = (props: Props) => {
   const [categories, setCategories] = useState<CategoryType[]>([]);
   const headerHeight = useHeaderHeight();
+  const router = useRouter();
 
   useEffect(() => {
     getCategories();
@@ -38,6 +41,11 @@ const ExploreScreen = (props: Props) => {
     console.log("categories", response.data.data);
   };
 
+  const onPressCategory = (categoryId: number) => {
+    router.dismissAll();
+    router.push("/(tabs)");
+  };
+
   return (
     <>
       <Stack.Screen options={{ headerShown: true, headerTransparent: true }} />
@@ -47,16 +55,18 @@ const ExploreScreen = (props: Props) => {
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item, index }) => (
-            <Animated.View
-              style={styles.itemWrapper}
-              entering={FadeInDown.delay(300 + index * 100).duration(500)}
-            >
-              <Text style={styles.itemTitle}>{item.title}</Text>
-              <Image
-                source={{ uri: item.picture }}
-                style={{ width: 100, height: 100, borderRadius: 10 }}
-              />
-            </Animated.View>
+            <TouchableOpacity onPress={() => onPressCategory(item.id)}>
+              <Animated.View
+                style={styles.itemWrapper}
+                entering={FadeInDown.delay(300 + index * 100).duration(500)}
+              >
+                <Text style={styles.itemTitle}>{item.title}</Text>
+                <Image
+                  source={{ uri: item.picture }}
+                  style={{ width: 100, height: 100, borderRadius: 10 }}
+                />
+              </Animated.View>
+            </TouchableOpacity>
           )}
         ></FlatList>
       </View>
