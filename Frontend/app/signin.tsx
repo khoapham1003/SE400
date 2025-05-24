@@ -1,29 +1,64 @@
 import { StyleSheet, TextInput, Text, View } from "react-native";
-import React from "react";
+import React, { useState } from "react";
 import { Link, Stack, router } from "expo-router";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
 import { TouchableOpacity } from "react-native";
+import { Personal_IP } from "@/constants/ip";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Alert } from "react-native";
 
 type Props = {};
 
 const SignInScreen = (props: Props) => {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignIn = async () => {
+    setIsLoading(true);
+    const URL = "http://" + Personal_IP.data + ":3000/auth/login";
+    router.dismissAll();
+    router.push("/(tabs)");
+    /*
+    try {
+      const response = await axios.post(URL, {
+        username,
+        password,
+      });
+      const token = response.data.access_token;
+      await AsyncStorage.setItem("access_token", token);
+      Alert.alert("Đăng nhập thành công!");
+     
+    } catch (error) {
+      console.error("Login failed:", error);
+      Alert.alert("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu");
+    } finally {
+      setIsLoading(false);
+    }
+    */
+  };
+
   return (
     <>
       <Stack.Screen options={{ headerTitle: "Sign Up" }} />
       <View style={styles.container}>
         <Text style={styles.title}>Login to Your Account</Text>
         <InputField
-          placeholder="Email Address"
+          placeholder="Username"
           placeholderTextColor={Colors.gray}
           autoCapitalize="none"
-          keyboardType="email-address"
+          value={username}
+          onChangeText={setUsername}
         />
         <InputField
           placeholder="Password"
           placeholderTextColor={Colors.gray}
           secureTextEntry={true}
+          value={password}
+          onChangeText={setPassword}
         />
 
         <TouchableOpacity
