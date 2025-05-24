@@ -21,7 +21,7 @@ type Props = {};
 const CartScreen = (props: Props) => {
   const headerHeight = useHeaderHeight();
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
-  const userID = 1; //temp
+  const userId = 1; //temp
 
   useEffect(() => {
     getCartData();
@@ -31,8 +31,8 @@ const CartScreen = (props: Props) => {
     const URL =
       "http://" +
       Personal_IP.data +
-      ":3000//cart/find-cart-by-userid/" +
-      { userID };
+      ":3000//cart/find-cart-by-userId/" +
+      { userId };
     const response = await axios.get(URL).catch((error) => {
       console.log(
         "There has been a problem with your fetch operation: " + error.message
