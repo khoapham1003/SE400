@@ -1,5 +1,5 @@
 export interface ProductType {
-  id?: number;
+  id: number;
   title?: string;
   slug?: string;
   content?: string;
@@ -129,4 +129,5 @@ export interface NotificationType {
   title: string;
   message: string;
   timestamp: string;
+  grandTotal: number;
 }
