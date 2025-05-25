@@ -1,14 +1,18 @@
-import { StyleSheet, TextInput, Text, View } from "react-native";
+import {
+  StyleSheet,
+  TextInput,
+  Text,
+  View,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import React, { useState } from "react";
 import { Link, Stack, router } from "expo-router";
 import { Colors } from "@/constants/Colors";
-import { Ionicons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
-import { TouchableOpacity } from "react-native";
 import { Personal_IP } from "@/constants/ip";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Alert } from "react-native";
 
 type Props = {};
 
@@ -18,32 +22,61 @@ const SignInScreen = (props: Props) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
+    if (!username || !password) {
+      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ tài khoản và mật khẩu.");
+      return;
+    }
+
     setIsLoading(true);
-    const URL = "http://" + Personal_IP.data + ":3000/auth/login";
-    router.dismissAll();
-    router.push("/(tabs)");
-    /*
+    const URL = `http://${Personal_IP.data}:3000/auth/login`;
+
+    const requestBody = {
+      Email: username,
+      Password: password,
+    };
+
     try {
-      const response = await axios.post(URL, {
-        username,
-        password,
-      });
+      console.log("Gửi đến:", URL);
+      const response = await axios.post(URL, requestBody);
+      console.log("Phần hề: ", response.data);
       const token = response.data.access_token;
-      await AsyncStorage.setItem("access_token", token);
-      Alert.alert("Đăng nhập thành công!");
-     
-    } catch (error) {
+      if (token) {
+        await AsyncStorage.setItem("access_token", token);
+        const payloadBase64 = token.split(".")[1];
+        const decodedPayload = JSON.parse(
+          Buffer.from(payloadBase64, "base64").toString("utf-8")
+        );
+
+        const email = decodedPayload.email;
+        const CartId = String(decodedPayload.CartId);
+        const UserId = String(decodedPayload.UserId);
+        const role = decodedPayload.role;
+
+        // Lưu vào AsyncStorage
+        await AsyncStorage.setItem("email", email);
+        await AsyncStorage.setItem("CartId", CartId);
+        await AsyncStorage.setItem("userId", UserId);
+        await AsyncStorage.setItem("role", role);
+
+        Alert.alert("Đăng nhập thành công!");
+        router.dismissAll();
+        router.push("/(tabs)");
+      } else {
+        Alert.alert("Lỗi", "Không nhận được token từ máy chủ.");
+      }
+    } catch (error: any) {
       console.error("Login failed:", error);
-      Alert.alert("Đăng nhập thất bại", "Sai tài khoản hoặc mật khẩu");
+      const message =
+        error.response?.data?.message || "Sai tài khoản hoặc mật khẩu";
+      Alert.alert("Đăng nhập thất bại", message);
     } finally {
       setIsLoading(false);
     }
-    */
   };
 
   return (
     <>
-      <Stack.Screen options={{ headerTitle: "Sign Up" }} />
+      <Stack.Screen options={{ headerTitle: "Sign In" }} />
       <View style={styles.container}>
         <Text style={styles.title}>Login to Your Account</Text>
         <InputField
@@ -63,17 +96,17 @@ const SignInScreen = (props: Props) => {
 
         <TouchableOpacity
           style={styles.btn}
-          onPress={() => {
-            router.dismissAll();
-            router.push("/(tabs)");
-          }}
+          onPress={handleSignIn}
+          disabled={isLoading}
         >
-          <Text style={styles.btnTxt}>Login</Text>
+          <Text style={styles.btnTxt}>
+            {isLoading ? "Đang đăng nhập..." : "Login"}
+          </Text>
         </TouchableOpacity>
 
         <Text style={styles.loginTxt}>
           You don't have an account?{" "}
-          <Link href={"/signup"} asChild>
+          <Link href="/signup" asChild>
             <TouchableOpacity>
               <Text style={styles.loginTxtSpan}>Sign Up</Text>
             </TouchableOpacity>

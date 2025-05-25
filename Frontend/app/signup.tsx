@@ -1,42 +1,47 @@
-import { StyleSheet, TextInput, Text, View } from "react-native";
+import { StyleSheet, TextInput, Text, View, Alert } from "react-native";
 import React, { useState } from "react";
-import { Link, Stack } from "expo-router";
+import { Link, Stack, router } from "expo-router";
 import { Colors } from "@/constants/Colors";
-import { Ionicons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
 import { TouchableOpacity } from "react-native";
 import axios from "axios";
 import { Personal_IP } from "@/constants/ip";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type Props = {};
-
-const SignUpScreen = (props: Props) => {
+const SignUpScreen = () => {
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp");
       return;
     }
 
-    try {
-      const URL = "http://" + Personal_IP.data + ":3000/auth/register";
-      const response = await axios.post(URL, {
-        email,
-        password,
-      });
+    const URL = "http://" + Personal_IP.data + ":3000/auth/register";
 
-      // Giả sử API trả về token
-      await AsyncStorage.setItem("token", response.data.token);
-      alert("Sign up successful!");
+    const requestBody = {
+      firstName,
+      middleName,
+      lastName,
+      phoneNumber,
+      email,
+      password,
+      confirmPassword,
+    };
+
+    try {
+      const response = await axios.post(URL, requestBody);
+      Alert.alert("Thành công", "Đăng ký thành công!");
+      router.push("/signin"); // hoặc router.replace nếu không muốn quay lại màn đăng ký
     } catch (error: any) {
-      console.error(error);
-      alert(
-        "Sign up failed: " + error?.response?.data?.message || error.message
-      );
+      const errorMessage = error?.response?.data?.message || "Đăng ký thất bại";
+      Alert.alert("Lỗi", errorMessage);
+      console.error("Đăng ký lỗi:", errorMessage);
     }
   };
 
@@ -44,39 +49,57 @@ const SignUpScreen = (props: Props) => {
     <>
       <Stack.Screen options={{ headerTitle: "Sign Up" }} />
       <View style={styles.container}>
-        <Text style={styles.title}>Create an Account</Text>
+        <Text style={styles.title}>Tạo Tài Khoản</Text>
+
         <InputField
-          placeholder="Email Address"
-          placeholderTextColor={Colors.gray}
-          autoCapitalize="none"
-          keyboardType="email-address"
+          placeholder="Họ"
+          value={lastName}
+          onChangeText={setLastName}
+        />
+        <InputField
+          placeholder="Tên lót"
+          value={middleName}
+          onChangeText={setMiddleName}
+        />
+        <InputField
+          placeholder="Tên"
+          value={firstName}
+          onChangeText={setFirstName}
+        />
+        <InputField
+          placeholder="Số điện thoại"
+          value={phoneNumber}
+          onChangeText={setPhoneNumber}
+          keyboardType="phone-pad"
+        />
+        <InputField
+          placeholder="Email"
           value={email}
           onChangeText={setEmail}
+          keyboardType="email-address"
         />
         <InputField
-          placeholder="Password"
-          placeholderTextColor={Colors.gray}
-          secureTextEntry={true}
+          placeholder="Mật khẩu"
           value={password}
           onChangeText={setPassword}
+          secureTextEntry={true}
         />
         <InputField
-          placeholder="Confirm Password"
-          placeholderTextColor={Colors.gray}
-          secureTextEntry={true}
+          placeholder="Xác nhận mật khẩu"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
+          secureTextEntry={true}
         />
 
         <TouchableOpacity style={styles.btn} onPress={handleSignUp}>
-          <Text style={styles.btnTxt}>Create an Account</Text>
+          <Text style={styles.btnTxt}>Đăng ký</Text>
         </TouchableOpacity>
 
         <Text style={styles.loginTxt}>
-          Already have an account?{" "}
+          Bạn đã có tài khoản?{" "}
           <Link href={"/signin"} asChild>
             <TouchableOpacity>
-              <Text style={styles.loginTxtSpan}>Sign In</Text>
+              <Text style={styles.loginTxtSpan}>Đăng nhập</Text>
             </TouchableOpacity>
           </Link>
         </Text>
@@ -100,7 +123,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 1.2,
     color: Colors.black,
-    marginBottom: 50,
+    marginBottom: 30,
   },
   btn: {
     backgroundColor: Colors.primary,
@@ -109,7 +132,7 @@ const styles = StyleSheet.create({
     alignSelf: "stretch",
     alignItems: "center",
     borderRadius: 5,
-    marginBottom: 20,
+    marginVertical: 20,
   },
   btnTxt: {
     color: Colors.white,
@@ -117,7 +140,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   loginTxt: {
-    marginTop: 30,
+    marginTop: 20,
     color: Colors.black,
     fontSize: 14,
     lineHeight: 24,

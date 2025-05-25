@@ -1,4 +1,5 @@
 import {
+  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -6,19 +7,63 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import { Stack } from "expo-router";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import { UserType } from "@/types/type";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Personal_IP } from "@/constants/ip";
+import axios from "axios";
 
 type Props = {
   thisUser: UserType;
 };
 
 const ProfileScreen = ({ thisUser }: Props) => {
-  console.log("thisUser", thisUser);
+  const [jwtToken, setJwtToken] = React.useState<string | null>(null);
+  const [userId, setUserId] = React.useState<string | null>(null);
+  const [userData, setUserData] = React.useState<UserType | null>(null);
+  useEffect(() => {
+    const loadAuthData = async () => {
+      const token = await AsyncStorage.getItem("access_token");
+      const user = await AsyncStorage.getItem("userId");
+      if (token && user) {
+        setJwtToken(token);
+        setUserId(user);
+      }
+    };
+    loadAuthData();
+  }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const apiUrl = `http://${Personal_IP.data}:3000/user/get-user/${userId}`;
+      console.log("Request URL:", apiUrl);
+
+      const response = await axios.get(apiUrl, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+
+      const user = response.data.data;
+
+      setUserData(user);
+    } catch (error: any) {
+      console.error(
+        "Error fetching user data:",
+        error?.response?.data || error.message
+      );
+    }
+  };
+  useEffect(() => {
+    if (userId && jwtToken) {
+      fetchUserData();
+    }
+  }, [userId, jwtToken]);
   const headerHeight = useHeaderHeight();
 
   return (
@@ -26,16 +71,14 @@ const ProfileScreen = ({ thisUser }: Props) => {
       <Stack.Screen options={{ headerShown: true, headerTransparent: true }} />
       <View style={[styles.container, { marginTop: headerHeight }]}>
         <View style={{ alignItems: "center" }}>
-          <Image
+          {/* <Image
             style={styles.userImg}
             source={{
               // uri: thisUser?.picture,
               uri: "https://xsgames.co/randomusers/avatar.php?g=pixel&key=1",
             }}
-          />
-          <Text style={styles.userName}>
-            {thisUser?.firstName}|{"Temp Name"}
-          </Text>
+          /> */}
+          <Text style={styles.userName}>{userData?.firstName}</Text>
         </View>
         <View style={styles.buttonWrapper}>
           <TouchableOpacity style={styles.button}>
