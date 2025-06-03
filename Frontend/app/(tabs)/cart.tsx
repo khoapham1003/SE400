@@ -10,7 +10,7 @@ import React, { useEffect, useState } from "react";
 import { Personal_IP } from "@/constants/ip";
 import axios from "axios";
 import { CartItemType } from "@/types/type";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
@@ -21,26 +21,24 @@ type Props = {};
 const CartScreen = (props: Props) => {
   const headerHeight = useHeaderHeight();
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
-  const userId = 1; //temp
+  const router = useRouter();
+  const userId = 1; // temp user ID
 
   useEffect(() => {
     getCartData();
   }, []);
 
   const getCartData = async () => {
-    const URL =
-      "http://" +
-      Personal_IP.data +
-      ":3000//cart/find-cart-by-userId/" +
-      { userId };
-    const response = await axios.get(URL).catch((error) => {
+    try {
+      const URL = `http://${Personal_IP.data}:3000/cart/find-cart-by-userId/${userId}`;
+      const response = await axios.get(URL);
+      setCartItems(response.data.data);
+      console.log("cart data", response.data.data);
+    } catch (error: any) {
       console.log(
         "There has been a problem with your fetch operation: " + error.message
       );
-      throw error;
-    });
-    setCartItems(response.data.data);
-    console.log("cart data", response.data.data);
+    }
   };
 
   return (
@@ -58,13 +56,16 @@ const CartScreen = (props: Props) => {
               <CartItem item={item} />
             </Animated.View>
           )}
-        ></FlatList>
+        />
       </View>
       <View style={styles.footer}>
         <View style={styles.priceInfoWrapper}>
           <Text style={styles.totalText}>Total: $100</Text>
         </View>
-        <TouchableOpacity style={styles.checkoutBtn}>
+        <TouchableOpacity
+          style={styles.checkoutBtn}
+          onPress={() => router.push("/checkout")}
+        >
           <Text style={styles.checkoutBtnText}>Checkout</Text>
         </TouchableOpacity>
       </View>
@@ -155,15 +156,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     padding: 20,
     backgroundColor: Colors.white,
-    // position: "absolute",
-    // bottom: 0,
-    // left: 0,
-    // right: 0,
   },
   priceInfoWrapper: {
     flex: 1,
     justifyContent: "center",
-
     flexDirection: "row",
     marginBottom: 10,
   },
