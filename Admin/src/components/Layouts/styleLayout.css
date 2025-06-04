@@ -1,0 +1,114 @@
+.content {
+  background-color: #fafafa;
+}
+/* Start Header */
+.inner {
+  align-items: center;
+  display: flex;
+  margin: 0px 0px !important;
+}
+.h_wrapper {
+  display: flex;
+  align-items: center;
+  border-bottom: 2px solid #f3f4f6;
+}
+.h_inner {
+  padding: 1rem 0rem;
+  width: 100%;
+  box-shadow: rgba(0, 0, 0, 0.15) 0px 5px 15px, 5px 0px 10px #ffffff;
+}
+.h_log_inner {
+  display: flex;
+  justify-content: space-between;
+}
+.h_logo {
+  padding-left: 2rem;
+  height: 3rem;
+  display: flex;
+  justify-content: center;
+  cursor: pointer;
+}
+.h_search_bar {
+  flex: 1;
+  padding: 0rem 0rem 0rem 2rem;
+}
+.h_cart_button {
+  flex-grow: 1;
+  max-width: max-content;
+  margin-right: 1rem;
+  margin-left: 1rem;
+}
+.h_login_button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: max-content;
+  margin-right: 3rem;
+}
+.h_user_button {
+  max-width: max-content;
+  flex-grow: 1;
+  margin-right: 3rem;
+  align-items: center;
+  justify-content: center;
+}
+/* End Header */
+
+/* Start Footer */
+.f_wrapper {
+  /* position: absolute;
+  bottom: 0; */
+  /* height: 25vh; */
+}
+.f_inner {
+  box-shadow: rgba(0, 0, 0, 0.15) 0px -5px 15px, 5px 0px 10px #ffffff;
+  height: 20rem;
+  display: flex;
+  justify-content: space-between;
+}
+.f_logo {
+  display: flex;
+  justify-content: center;
+  float: left;
+  flex-grow: 1;
+}
+.f_logo_image {
+  height: 15rem;
+}
+.f_help {
+  display: flex;
+  justify-content: space-around;
+  float: right;
+  flex-grow: 2;
+}
+.f_help h2 {
+  font-size: 1.5vw;
+  margin-bottom: 10px !important;
+}
+.f_help a {
+  margin-bottom: 5px;
+  text-decoration: none;
+  color: #8c8c8c;
+  font-size: 0.8rem;
+}
+.f_help a:hover {
+  color: black;
+  text-decoration: underline;
+  transition: all 0.2s cubic-bezier(0.05, 0.05, 0.1, 0.5);
+}
+.ContactInformation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex: 0.5;
+}
+.CustomerService {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.TermsofService {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}

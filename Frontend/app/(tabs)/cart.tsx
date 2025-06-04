@@ -9,8 +9,9 @@ import {
 import React, { useEffect, useState } from "react";
 import { Personal_IP } from "@/constants/ip";
 import axios from "axios";
+
 import { CartItemType, CartType, UserType } from "@/types/type";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
@@ -29,6 +30,7 @@ const CartScreen = ({ thisUser }: Props) => {
   const [cart, setCart] = React.useState<CartType | null>(null);
 
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
+
 
   useEffect(() => {
     const loadAuthData = async () => {
@@ -108,13 +110,16 @@ const CartScreen = ({ thisUser }: Props) => {
               <CartItem item={item} index={index} />
             </Animated.View>
           )}
-        ></FlatList>
+        />
       </View>
       <View style={styles.footer}>
         <View style={styles.priceInfoWrapper}>
           <Text style={styles.totalText}>Total: $100</Text>
         </View>
-        <TouchableOpacity style={styles.checkoutBtn}>
+        <TouchableOpacity
+          style={styles.checkoutBtn}
+          onPress={() => router.push("/checkout")}
+        >
           <Text style={styles.checkoutBtnText}>Checkout</Text>
         </TouchableOpacity>
       </View>
