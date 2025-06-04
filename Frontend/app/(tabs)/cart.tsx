@@ -30,7 +30,7 @@ const CartScreen = ({ thisUser }: Props) => {
   const [cart, setCart] = React.useState<CartType | null>(null);
 
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
-
+  const router = useRouter();
 
   useEffect(() => {
     const loadAuthData = async () => {
