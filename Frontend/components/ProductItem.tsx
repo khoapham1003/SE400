@@ -13,7 +13,6 @@ import { Colors } from "@/constants/Colors";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Link } from "expo-router";
 
-
 type Props = {
   item: ProductType;
   index: number;
@@ -23,26 +22,33 @@ const width = Dimensions.get("window").width - 40;
 
 const ProductItem = ({ item, index }: Props) => {
   return (
-      <Link href={`/product-details/${item.id}`} asChild>
+    <Link href={`/product-details/${item.id}`} asChild>
       <TouchableOpacity>
-    <Animated.View
-      entering={FadeInDown.delay(300 + index * 100).duration(500)}
-      style={styles.container}
-    >
-      <Image source={{ uri: item.picture }} style={styles.productImg} />
-      <TouchableOpacity style={styles.bookmarkBtn}>
-        <Ionicons name="heart-outline" size={22} color={Colors.black} />
+        <Animated.View
+          entering={FadeInDown.delay(300 + index * 100).duration(500)}
+          style={styles.container}
+        >
+          <Image
+            style={styles.productImg}
+            source={
+              item.picture
+                ? { uri: item.picture }
+                : require("@/assets/images/no-image-available.jpg")
+            }
+          ></Image>
+          <TouchableOpacity style={styles.bookmarkBtn}>
+            <Ionicons name="heart-outline" size={22} color={Colors.black} />
+          </TouchableOpacity>
+          <View style={styles.productInfo}>
+            <Text style={styles.price}>${item.price}</Text>
+            <View style={styles.ratingWrapper}>
+              <Ionicons name="star" size={20} color="#D5AF37" />
+              <Text style={styles.rating}>4.6</Text>
+            </View>
+          </View>
+          <Text style={styles.title}>{item.title}</Text>
+        </Animated.View>
       </TouchableOpacity>
-      <View style={styles.productInfo}>
-        <Text style={styles.price}>${item.price}</Text>
-        <View style={styles.ratingWrapper}>
-          <Ionicons name="star" size={20} color="#D5AF37" />
-          <Text style={styles.rating}>4.6</Text>
-        </View>
-      </View>
-      <Text style={styles.title}>{item.title}</Text>
-    </Animated.View>
-    </TouchableOpacity>
     </Link>
   );
 };

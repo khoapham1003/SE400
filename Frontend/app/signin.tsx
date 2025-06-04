@@ -38,7 +38,7 @@ const SignInScreen = (props: Props) => {
     try {
       console.log("Gửi đến:", URL);
       const response = await axios.post(URL, requestBody);
-      console.log("Phần hề: ", response.data);
+      console.log("Response: ", response.data);
       const token = response.data.access_token;
       if (token) {
         await AsyncStorage.setItem("access_token", token);
