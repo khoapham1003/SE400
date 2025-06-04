@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { MoreThan, LessThan } from 'typeorm';
 import { Like, Repository } from 'typeorm';
 import { CreateProductDto } from '../dto/create-product.dto';
 import { UpdateProductDto } from '../dto/update-product.dto';
@@ -25,6 +26,20 @@ export class ProductService {
       where: { shop: true },
     });
   }
+
+  async findFlashSale(): Promise<Product[]> {
+    const now = new Date();
+
+    return await this.productRepository.find({
+      where: {
+        discount: MoreThan(0),
+        startsAt: LessThan(now),
+        endsAt: MoreThan(now),
+        shop: true
+      },
+    });
+  }
+
   async findAllAdmin(): Promise<Product[]> {
     return await this.productRepository.find();
   }
@@ -69,7 +84,6 @@ export class ProductService {
       ...updateProductDto,
   };
 
-  console.log("LOI1",updatedProduct);
     return await this.productRepository.save(updatedProduct);
   }
 

@@ -79,10 +79,27 @@ export class ProductController {
   ): Promise<Product[]> {
     return this.productService.findByCategory(categoryId);
   }
+
   @Get('get-all-products')
   async findAll() {
     try {
       const products = await this.productService.findAll();
+      return { statusCode: HttpStatus.OK, data: products };
+    } catch (error) {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message: error.message,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('get-all-products-flashsale')
+  async findAllFlashSale() {
+    try {
+      const products = await this.productService.findFlashSale();
       return { statusCode: HttpStatus.OK, data: products };
     } catch (error) {
       throw new HttpException(
