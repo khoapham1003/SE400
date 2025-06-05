@@ -17,56 +17,41 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Checkbox } from "react-native-paper";
 
 type Props = {
   thisUser: UserType;
 };
 
 const CartScreen = ({ thisUser }: Props) => {
+  const [isLoading, setIsLoading] = useState(false);
   const headerHeight = useHeaderHeight();
   const [jwtToken, setJwtToken] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
-
-  const [cart, setCart] = React.useState<CartType | null>(null);
-
+  const [cartId, setCartId] = React.useState<string | null>(null);
   const [cartItems, setCartItems] = useState<CartItemType[]>([]);
+  const [selectedItems, setSelectedItems] = useState<CartItemType[]>([]);
+
   const router = useRouter();
 
   useEffect(() => {
     const loadAuthData = async () => {
       const token = await AsyncStorage.getItem("access_token");
       const user = await AsyncStorage.getItem("userId");
+      const cart = await AsyncStorage.getItem("CartId");
       if (token && user) {
         setJwtToken(token);
         setUserId(user);
+        setCartId(cart);
       }
     };
     loadAuthData();
   }, []);
 
-  const getCart = async () => {
-    try {
-      const cartURL = `http://${Personal_IP.data}:3000/cart/find-cart-by-userId/${userId}`;
-      const cartResponse = await axios.get(cartURL, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${jwtToken}`,
-        },
-      });
-      if (cartResponse.data?.id !== cart?.id) {
-        setCart(cartResponse.data);
-      }
-    } catch (error: any) {
-      console.error(
-        "Error fetching Cart:",
-        error?.response?.data || error.message
-      );
-    }
-  };
-
   const getCartData = async () => {
+    setIsLoading(true);
     try {
-      const cartDataURL = `http://${Personal_IP.data}:3000/cartitem/get-cart-data/${cart?.id}`;
+      const cartDataURL = `http://${Personal_IP.data}:3000/cartitem/get-cart-data/${cartId}`;
       const cartDataResponse = await axios.get(cartDataURL, {
         headers: {
           "Content-Type": "application/json",
@@ -75,30 +60,211 @@ const CartScreen = ({ thisUser }: Props) => {
       });
 
       setCartItems(cartDataResponse.data);
-      console.log("------Cart Data response:", cartItems);
     } catch (error: any) {
       console.error(
         "Error fetching Cart data:",
         error?.response?.data || error.message
       );
     }
+    setIsLoading(false);
   };
 
   useEffect(() => {
-    if (userId && jwtToken) {
-      getCart();
-    }
-  }, [userId, jwtToken]);
-  useEffect(() => {
-    if (cart && jwtToken) {
+    if (cartId && jwtToken) {
       getCartData();
     }
-  }, [cart, jwtToken]);
+  }, [cartId, jwtToken]);
+
+  const toggleItem = (item: CartItemType) => {
+    const isSelected = selectedItems.some((i) => i.id === item.id);
+    if (isSelected) {
+      setSelectedItems((prev) => prev.filter((i) => i.id !== item.id));
+    } else {
+      setSelectedItems((prev) => [...prev, item]);
+    }
+  };
+
+  const isAllSelected =
+    cartItems.length > 0 && selectedItems.length === cartItems.length;
+
+  const toggleAll = (value: boolean) => {
+    setSelectedItems(value ? cartItems : []);
+  };
+
+  const handleRemoveItem = (cartItemId: number) => {
+    removeCartItem(cartItemId);
+  };
+
+  const removeCartItem = async (cartItemId: number) => {
+    setIsLoading(true);
+    try {
+      if (selectedItems.some((item) => item.id === cartItemId)) {
+        setSelectedItems((prev) =>
+          prev.filter((item) => item.id !== cartItemId)
+        );
+      }
+
+      const URL = `http://${Personal_IP.data}:3000/cartitem/delete-cartitem/${cartItemId}`;
+      const response = await axios.delete(URL, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+
+      if (!response) {
+        throw new Error(`HTTP error! Status: ${response}`);
+      }
+
+      await getCartData();
+    } catch (error) {
+      console.error("Error removing cart item:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleQuantityChange = async (itemId: number, value: number) => {
+    setIsLoading(true);
+    try {
+      const requestData = {
+        quantity: value,
+      };
+      const URL = `http://${Personal_IP.data}:3000/cartitem/update-cartitem/${itemId}`;
+      const response = await axios.patch(URL, JSON.stringify(requestData), {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+
+      if (!response) {
+        throw new Error(`HTTP error! Status: ${response}`);
+      }
+      await getCartData();
+    } catch (error) {
+      console.error("Error updating cart item quantity:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleCheckout = async () => {
+    setIsLoading(true);
+    try {
+      const requestData = {
+        userId: userId,
+        subTotal: totalAmount,
+        totalDiscount: totalDiscount,
+      };
+
+      if (selectedItems.length === 0) {
+        throw new Error("Please select at least one item to checkout.");
+      }
+
+      const URL = `http://${Personal_IP.data}:3000/orders/create-order/${userId}`;
+      const response = await axios.post(URL, JSON.stringify(requestData), {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+
+      if (!response) {
+        throw new Error(`HTTP error! Status: ${response}`);
+      }
+
+      const orderResponse = await response.data;
+      const orderId = orderResponse.id;
+      await AsyncStorage.setItem("orderId", orderId.toString());
+      await handleCheckoutItems(orderId);
+      console.log("Order ID:", orderId);
+      router.push("/checkout");
+      console.log("Order placed successfully!");
+    } catch (error) {
+      console.error("Error placing the order:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const handleCheckoutItems = async (orderId: number) => {
+    setIsLoading(true);
+    try {
+      const selectedVIds = selectedItems.map((item) => item.productVID);
+      const selectedPrices = selectedItems.map(
+        (item) => item?.productVariant?.product?.price
+      );
+      const selectedDiscount = selectedItems.map(
+        (item) => item?.productVariant?.product?.discount
+      );
+      const selectQuantity = selectedItems.map((item) => item.quantity);
+
+      const requestData = selectedVIds.map((productVID, index) => ({
+        orderID: orderId,
+        productVID: productVID,
+        price: selectedPrices[index],
+        discount: selectedDiscount[index],
+        quantity: selectQuantity[index],
+      }));
+
+      const URL = `http://${Personal_IP.data}:3000/order-item/create-orderitems`;
+      const response = await axios.post(URL, JSON.stringify(requestData), {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+
+      if (!response) {
+        throw new Error(`HTTP error! Status: ${response}`);
+      }
+
+      await AsyncStorage.setItem(
+        "cartitemsId",
+        JSON.stringify(selectedItems.map((item) => item.id))
+      );
+      console.log("Order items added:", response);
+    } catch (error) {
+      console.error("Error adding order items:", error);
+    }
+    setIsLoading(false);
+  };
+
+  const totalAmount = selectedItems.reduce((total, item) => {
+    const isSelected = selectedItems.some(
+      (selected) => selected.id === item.id
+    );
+    const price = item.productVariant?.product?.price || 0;
+    const quantity = item.quantity || 0;
+    return isSelected ? total + price * quantity : total;
+  }, 0);
+
+  const totalQuantity = selectedItems.reduce((total, item) => {
+    const isSelected = selectedItems.some(
+      (selected) => selected.id === item.id
+    );
+    return isSelected ? total + item.quantity : total;
+  }, 0);
+
+  const totalDiscount = selectedItems.reduce((total, item) => {
+    const isSelected = selectedItems.some(
+      (selected) => selected.id === item.id
+    );
+    const price = item.productVariant?.product?.price || 0;
+    const quantity = item.quantity || 0;
+    const discount = item.productVariant?.product?.discount || 0;
+    return isSelected ? total + (price * quantity * discount) / 100 : total;
+  }, 0);
 
   return (
     <>
       <Stack.Screen options={{ headerShown: true, headerTransparent: true }} />
       <View style={[styles.container, { marginTop: headerHeight }]}>
+        <View style={styles.chooseAllWrapper}>
+          <Checkbox.Android
+            status={isAllSelected ? "checked" : "unchecked"}
+            onPress={() => toggleAll(!isAllSelected)}
+          />
+          <Text>Chọn tất cả</Text>
+        </View>
         <FlatList
           data={cartItems}
           showsHorizontalScrollIndicator={false}
@@ -107,18 +273,27 @@ const CartScreen = ({ thisUser }: Props) => {
             <Animated.View
               entering={FadeInDown.delay(300 + index * 100).duration(500)}
             >
-              <CartItem item={item} index={index} />
+              <CartItem
+                item={item}
+                index={index}
+                isSelected={selectedItems.some((i) => i.id === item.id)}
+                onToggle={() => toggleItem(item)}
+                onQuantityChange={(id, quantity) =>
+                  handleQuantityChange(id, quantity)
+                }
+                onRemove={() => handleRemoveItem(item.id)}
+              />
             </Animated.View>
           )}
         />
       </View>
       <View style={styles.footer}>
         <View style={styles.priceInfoWrapper}>
-          <Text style={styles.totalText}>Total: $100</Text>
+          <Text style={styles.totalText}>Total: ${totalAmount}</Text>
         </View>
         <TouchableOpacity
           style={styles.checkoutBtn}
-          onPress={() => router.push("/checkout")}
+          onPress={() => handleCheckout()}
         >
           <Text style={styles.checkoutBtnText}>Checkout</Text>
         </TouchableOpacity>
@@ -127,9 +302,28 @@ const CartScreen = ({ thisUser }: Props) => {
   );
 };
 
-const CartItem = ({ item, index }: { item: CartItemType; index: number }) => {
+const CartItem = ({
+  item,
+  index,
+  isSelected,
+  onToggle,
+  onQuantityChange,
+  onRemove,
+}: {
+  item: CartItemType;
+  index: number;
+  isSelected: boolean;
+  onToggle: () => void;
+  onQuantityChange: (cartItemId: number, newQuantity: number) => void;
+  onRemove: () => void;
+}) => {
   return (
     <View style={styles.itemWrapper}>
+      <Checkbox.Android
+        status={isSelected ? "checked" : "unchecked"}
+        onPress={onToggle}
+        style={styles.checkbox}
+      />
       <Image
         source={
           item.productVariant?.product?.picture
@@ -139,26 +333,43 @@ const CartItem = ({ item, index }: { item: CartItemType; index: number }) => {
         style={styles.itemImg}
       />
       <View style={styles.itemInfoWrapper}>
-        <Text style={styles.itemText}>
+        <Text style={styles.itemTitle}>
           {item.productVariant?.product?.title}
         </Text>
-        <Text style={styles.itemText}>${item.price}</Text>
+        <Text style={styles.itemSubText}>
+          Color: {item.productVariant?.color?.name || "None"} | Size:{" "}
+          {item.productVariant?.size?.name || "None"}
+        </Text>
+        <Text style={styles.itemPrice}>
+          $
+          {Number(
+            item.productVariant?.product?.price || 0 * item.quantity
+          ).toLocaleString("vi-VN", {
+            style: "currency",
+            currency: "VND",
+          })}
+        </Text>
+
         <View style={styles.itemControlWrapper}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={onRemove}>
             <Ionicons name="trash-outline" size={20} color={Colors.red} />
           </TouchableOpacity>
           <View style={styles.quantityControlWrapper}>
-            <TouchableOpacity style={styles.quantityControl}>
+            <TouchableOpacity
+              style={styles.quantityBtn}
+              onPress={() => onQuantityChange(item.id, item.quantity - 1)}
+              disabled={item.quantity === 1}
+            >
               <Ionicons name="remove-outline" size={20} color={Colors.black} />
             </TouchableOpacity>
-            <Text>{item.quantity}</Text>
-            <TouchableOpacity style={styles.quantityControl}>
+            <Text style={styles.quantityText}>{item.quantity}</Text>
+            <TouchableOpacity
+              style={styles.quantityBtn}
+              onPress={() => onQuantityChange(item.id, item.quantity + 1)}
+            >
               <Ionicons name="add-outline" size={20} color={Colors.black} />
             </TouchableOpacity>
           </View>
-          <TouchableOpacity>
-            <Ionicons name="heart-outline" size={20} color={Colors.black} />
-          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -175,45 +386,62 @@ const styles = StyleSheet.create({
   },
   itemWrapper: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
     borderColor: Colors.lightGray,
     borderRadius: 10,
+    backgroundColor: "#fff",
   },
+  checkbox: {},
   itemImg: {
     width: 100,
     height: 100,
-    borderRadius: 10,
-    marginRight: 16,
+    borderColor: Colors.black,
+    borderWidth: 0.5,
+    borderRadius: 6,
+    marginHorizontal: 8,
     backgroundColor: Colors.lightGray,
   },
   itemInfoWrapper: {
     flex: 1,
-    gap: 8,
+    gap: 4,
   },
-  itemText: {
-    fontSize: 16,
-    fontWeight: "500",
+  itemTitle: {
+    fontSize: 14,
+    fontWeight: "600",
     color: Colors.black,
+  },
+  itemSubText: {
+    fontSize: 12,
+    color: "#666",
+  },
+  itemPrice: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: Colors.primary,
   },
   itemControlWrapper: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginTop: 8,
+    marginTop: 6,
   },
   quantityControlWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
-  quantityControl: {
-    padding: 6,
+  quantityBtn: {
+    padding: 4,
     borderWidth: 1,
     borderColor: Colors.lightGray,
-    borderRadius: 5,
+    borderRadius: 4,
+  },
+  quantityText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
   footer: {
     flexDirection: "row",
@@ -244,5 +472,10 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: 16,
     fontWeight: "600",
+  },
+  chooseAllWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 12,
   },
 });

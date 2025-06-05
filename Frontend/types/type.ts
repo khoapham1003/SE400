@@ -84,6 +84,21 @@ export interface CartItemType {
   cart?: CartType;
 }
 
+export interface InProcessItemType {
+  id: number;
+  productVID: number;
+  cartID: number;
+  price: number;
+  discount: number;
+  quantity: number;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
+
+  productVariant: ProductVariantType;
+  cart?: CartType;
+}
+
 export interface OrderType {
   id: number;
   userId: number;

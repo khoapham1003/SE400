@@ -1,4 +1,8 @@
-import React from 'react';
+import { Personal_IP } from "@/constants/ip";
+import { CartItemType, InProcessItemType } from "@/types/type";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import React, { useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -7,56 +11,100 @@ import {
   Text,
   ScrollView,
   Image,
-} from 'react-native';
-import FeatherIcon from 'react-native-vector-icons/Feather';
+} from "react-native";
+import FeatherIcon from "react-native-vector-icons/Feather";
 
+//TEMP DATA
 const paymentMethods = [
   {
-    id: 'paypal',
-    label: 'PayPal',
-    img: 'https://assets.withfra.me/credit_cards/paypal.png',
+    id: "paypal",
+    label: "PayPal",
+    img: "https://assets.withfra.me/credit_cards/paypal.png",
   },
   {
-    id: 'amex-89001',
-    label: 'Amex ••••89001',
-    img: 'https://assets.withfra.me/credit_cards/amex.png',
+    id: "amex-89001",
+    label: "Amex ••••89001",
+    img: "https://assets.withfra.me/credit_cards/amex.png",
   },
   {
-    id: 'visa-3021',
-    label: 'Visa ••••3021',
-    img: 'https://assets.withfra.me/credit_cards/visa.png',
+    id: "visa-3021",
+    label: "Visa ••••3021",
+    img: "https://assets.withfra.me/credit_cards/visa.png",
   },
 ];
 
 const cartProducts = [
   {
-    id: '1',
-    name: 'Product 1',
+    id: "1",
+    name: "Product 1",
     price: 9.99,
     quantity: 1,
-    image: 'https://via.placeholder.com/60',
+    image: "https://via.placeholder.com/60",
   },
   {
-    id: '2',
-    name: 'Product 2',
-    price: 10.00,
+    id: "2",
+    name: "Product 2",
+    price: 10.0,
     quantity: 2,
-    image: 'https://via.placeholder.com/60',
+    image: "https://via.placeholder.com/60",
   },
 ];
+//TEMP DATA==END
 
-const ProductList = ({ products }) => {
+const ProductList = ({ products }: { products: InProcessItemType[] }) => {
+  console.log("products", products);
   return (
-    <View style={{ backgroundColor: '#fff', marginBottom: 12, padding: 16, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#e7e7e7' }}>
-      <Text style={{ fontSize: 19, fontWeight: '700', marginBottom: 12 }}>Products</Text>
-      {products.map(({ id, name, price, quantity, image }) => (
-        <View key={id} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-          <Image source={{ uri: image }} style={{ width: 60, height: 60, borderRadius: 8, marginRight: 12 }} />
+    <View
+      style={{
+        backgroundColor: "#fff",
+        marginBottom: 12,
+        padding: 16,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: "#e7e7e7",
+      }}
+    >
+      <Text style={{ fontSize: 19, fontWeight: "700", marginBottom: 12 }}>
+        Products
+      </Text>
+
+      {products.map(({ id, productVariant, price, quantity }) => (
+        <View
+          key={id}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 12,
+          }}
+        >
+          <Image
+            source={
+              productVariant.product?.picture
+                ? { uri: productVariant.product?.picture }
+                : require("@/assets/images/no-image-available.jpg")
+            }
+            style={{ width: 60, height: 60, borderRadius: 8, marginRight: 12 }}
+          />
           <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, fontWeight: '600' }}>{name}</Text>
-            <Text style={{ fontSize: 14, color: '#777' }}>Qty: {quantity}</Text>
+            <Text style={{ fontSize: 16, fontWeight: "600" }}>
+              {productVariant.product?.title}
+            </Text>
+
+            {/* Thêm Size và Color */}
+            <Text style={{ fontSize: 14, color: "#555" }}>
+              Color: {productVariant.color?.name || "N/A"} | Size:{" "}
+              {productVariant.size?.name || "N/A"}
+            </Text>
+
+            <Text style={{ fontSize: 14, color: "#777" }}>Qty: {quantity}</Text>
           </View>
-          <Text style={{ fontSize: 16, fontWeight: '600' }}>${(price * quantity).toFixed(2)}</Text>
+
+          <Text style={{ fontSize: 16, fontWeight: "600" }}>
+            {Math.abs(price * quantity).toLocaleString("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            })}
+          </Text>
         </View>
       ))}
     </View>
@@ -67,21 +115,67 @@ const Checkout = () => {
   const [form, setForm] = React.useState({
     paymentMethod: paymentMethods[0].id,
   });
+  const [jwtToken, setJwtToken] = React.useState<string | null>(null);
+  const [userId, setUserId] = React.useState<string | null>(null);
+  const [orderId, setOrderId] = React.useState<string | null>(null);
+  const [cartId, setCartId] = React.useState<string | null>(null);
+
+  const [items, setItems] = React.useState<InProcessItemType[]>([]);
+
+  const loadAuthData = async () => {
+    const token = await AsyncStorage.getItem("access_token");
+    const user = await AsyncStorage.getItem("userId");
+    const cart = await AsyncStorage.getItem("CartId");
+    const orderId = await AsyncStorage.getItem("orderId");
+    if (token && user) {
+      setJwtToken(token);
+      setUserId(user);
+      setCartId(cart);
+      setOrderId(orderId);
+    }
+  };
+  useEffect(() => {
+    loadAuthData();
+  }, []);
+
+  const fetchCheckOutData = async () => {
+    try {
+      const URL = `http://${Personal_IP.data}:3000/order-item/orderdata/${orderId}`;
+      const response = await axios.get(URL, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+      });
+      if (!response) {
+        throw new Error(`HTTP error! Status: ${response}`);
+      }
+
+      const data = await response;
+      setItems(data.data);
+      console.log("items", items);
+      return data;
+    } catch (error) {
+      console.error("Error fetching product data:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!jwtToken || !orderId) return;
+    fetchCheckOutData();
+  }, [jwtToken, orderId]);
 
   return (
     <View style={{ flex: 1 }}>
-      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-
-
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
         <ScrollView
           contentContainerStyle={styles.content}
-          style={{ backgroundColor: '#f7f7f7' }}>
-          <ProductList products={cartProducts} />
+          style={{ backgroundColor: "#f7f7f7" }}
+        >
+          <ProductList products={items} />
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Summary</Text>
-
-
             </View>
 
             <View style={styles.summaryRow}>
@@ -93,14 +187,8 @@ const Checkout = () => {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Delivery Fee</Text>
 
-              <TouchableOpacity
-                onPress={() => {
-                  // handle onPress
-                }}>
-                <FeatherIcon
-                  color="#454545"
-                  name="help-circle"
-                  size={17} />
+              <TouchableOpacity>
+                <FeatherIcon color="#454545" name="help-circle" size={17} />
               </TouchableOpacity>
 
               <Text style={styles.summaryPrice}>$3.95</Text>
@@ -109,14 +197,8 @@ const Checkout = () => {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Tip</Text>
 
-              <TouchableOpacity
-                onPress={() => {
-                  // handle onPress
-                }}>
-                <FeatherIcon
-                  color="#454545"
-                  name="help-circle"
-                  size={17} />
+              <TouchableOpacity>
+                <FeatherIcon color="#454545" name="help-circle" size={17} />
               </TouchableOpacity>
 
               <Text style={styles.summaryPrice}>$2.00</Text>
@@ -125,14 +207,8 @@ const Checkout = () => {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Discount</Text>
 
-              <TouchableOpacity
-                onPress={() => {
-                  // handle onPress
-                }}>
-                <FeatherIcon
-                  color="#454545"
-                  name="help-circle"
-                  size={17} />
+              <TouchableOpacity>
+                <FeatherIcon color="#454545" name="help-circle" size={17} />
               </TouchableOpacity>
 
               <Text style={styles.summaryPrice}>$3.75</Text>
@@ -146,11 +222,7 @@ const Checkout = () => {
               <Text style={styles.summaryPricePrimary}>$22.15</Text>
             </View>
 
-            <TouchableOpacity
-              onPress={() => {
-                // handle onPress
-              }}
-              style={styles.sectionButton}>
+            <TouchableOpacity style={styles.sectionButton}>
               <FeatherIcon color="#1A1A1A" name="plus" size={14} />
 
               <Text style={styles.sectionButtonText}>Add more items</Text>
@@ -174,23 +246,27 @@ const Checkout = () => {
                       isActive && styles.radioActive,
                       isFirst && styles.radioFirst,
                       isLast && styles.radioLast,
-                    ]}>
+                    ]}
+                  >
                     <TouchableOpacity
                       onPress={() =>
-                        setForm({ ...form, ['paymentMethod']: id })
+                        setForm({ ...form, ["paymentMethod"]: id })
                       }
-                      style={styles.radio}>
+                      style={styles.radio}
+                    >
                       <View
                         style={[
                           styles.radioInput,
                           isActive && styles.radioInputActive,
-                        ]} />
+                        ]}
+                      />
 
                       <Image
                         alt=""
                         resizeMode="contain"
                         source={{ uri: img }}
-                        style={styles.radioImg} />
+                        style={styles.radioImg}
+                      />
 
                       <Text style={styles.radioLabel}>{label}</Text>
                     </TouchableOpacity>
@@ -203,7 +279,8 @@ const Checkout = () => {
               onPress={() => {
                 // handle onPress
               }}
-              style={styles.sectionButton}>
+              style={styles.sectionButton}
+            >
               <FeatherIcon color="#1A1A1A" name="plus" size={14} />
 
               <Text style={styles.sectionButtonText}>Add payment method</Text>
@@ -217,7 +294,8 @@ const Checkout = () => {
           onPress={() => {
             // handle onPress
           }}
-          style={{ flex: 1, paddingHorizontal: 24 }}>
+          style={{ flex: 1, paddingHorizontal: 24 }}
+        >
           <View style={styles.btn}>
             <Text style={styles.btnText}>Place Order</Text>
           </View>
@@ -225,7 +303,7 @@ const Checkout = () => {
       </View>
     </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
   content: {
@@ -233,18 +311,18 @@ const styles = StyleSheet.create({
     paddingBottom: 80,
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    backgroundColor: "#fff",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingTop: 12,
     paddingHorizontal: 16,
     paddingBottom: 48,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
       height: 1,
@@ -255,69 +333,69 @@ const styles = StyleSheet.create({
   },
   /** Header */
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     paddingHorizontal: 12,
     borderBottomWidth: 1,
-    borderColor: '#efefef',
+    borderColor: "#efefef",
   },
   headerAction: {
     width: 40,
     height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 9999,
   },
   headerTitle: {
     fontSize: 17,
-    fontWeight: '600',
-    color: '#1d1d1d',
+    fontWeight: "600",
+    color: "#1d1d1d",
   },
   /** Section */
   section: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
-    borderColor: '#e7e7e7',
+    borderColor: "#e7e7e7",
     marginBottom: 12,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
   },
   sectionTitle: {
     fontSize: 19,
-    fontWeight: '700',
-    color: '#1d1d1d',
+    fontWeight: "700",
+    color: "#1d1d1d",
   },
   sectionAction: {
-    alignSelf: 'center',
-    backgroundColor: '#f7f7f7',
+    alignSelf: "center",
+    backgroundColor: "#f7f7f7",
     width: 30,
     height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 9999,
   },
   sectionButton: {
     marginTop: 12,
-    alignSelf: 'flex-end',
-    backgroundColor: '#f7f7f7',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: "flex-end",
+    backgroundColor: "#f7f7f7",
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 9999,
     paddingVertical: 6,
     paddingHorizontal: 12,
   },
   sectionButtonText: {
     fontSize: 14,
-    fontWeight: '700',
-    color: '#1A1A1A',
+    fontWeight: "700",
+    color: "#1A1A1A",
     marginLeft: 4,
   },
   sectionBody: {
@@ -325,60 +403,60 @@ const styles = StyleSheet.create({
   },
   summaryRow: {
     marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   summaryLabel: {
     marginRight: 4,
     fontSize: 16,
-    fontWeight: '500',
-    color: '#454545',
+    fontWeight: "500",
+    color: "#454545",
   },
   summaryPrice: {
-    marginLeft: 'auto',
+    marginLeft: "auto",
     fontSize: 16,
-    fontWeight: '500',
-    color: '#454545',
+    fontWeight: "500",
+    color: "#454545",
   },
   summaryTotal: {
     marginTop: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     borderTopWidth: 1,
-    borderColor: '#E7E7E7',
+    borderColor: "#E7E7E7",
     paddingTop: 8,
   },
   summaryPriceOld: {
-    marginLeft: 'auto',
+    marginLeft: "auto",
     fontSize: 15,
-    fontWeight: '500',
-    color: '#5D5D5D',
-    textDecorationLine: 'line-through',
+    fontWeight: "500",
+    color: "#5D5D5D",
+    textDecorationLine: "line-through",
   },
   summaryPricePrimary: {
     marginLeft: 6,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: "600",
+    color: "#000000",
   },
   /** Radio */
   radio: {
     paddingVertical: 12,
     paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-start',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
   },
   radioWrapper: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: '#e5e7e5',
+    borderColor: "#e5e7e5",
     marginTop: -2,
   },
   radioActive: {
-    backgroundColor: '#f1f4ff',
+    backgroundColor: "#f1f4ff",
   },
   radioFirst: {
     marginTop: 0,
@@ -394,43 +472,43 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 9999,
     borderWidth: 2,
-    borderColor: '#1d1d1d',
+    borderColor: "#1d1d1d",
     marginRight: 12,
   },
   radioInputActive: {
     borderWidth: 5,
-    borderColor: '#1d1d1d',
+    borderColor: "#1d1d1d",
   },
   radioImg: {
     width: 40,
     height: 30,
     borderWidth: 1,
-    borderColor: '#CBCBCB',
+    borderColor: "#CBCBCB",
     borderRadius: 4,
     marginRight: 12,
   },
   radioLabel: {
     fontSize: 16,
-    fontWeight: '500',
-    color: '#1d1d1d',
+    fontWeight: "500",
+    color: "#1d1d1d",
   },
   /** Button */
   btn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 20,
     borderWidth: 1,
-    backgroundColor: '#F82E08',
-    borderColor: '#F82E08',
+    backgroundColor: "#F82E08",
+    borderColor: "#F82E08",
   },
   btnText: {
     fontSize: 16,
     lineHeight: 26,
-    fontWeight: 'bold',
-    color: '#fff',
+    fontWeight: "bold",
+    color: "#fff",
     letterSpacing: 0.45,
   },
 });

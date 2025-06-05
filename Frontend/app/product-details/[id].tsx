@@ -4,24 +4,57 @@ import {
   TouchableOpacity,
   View,
   ScrollView,
+  Alert,
 } from "react-native";
 import React, { useEffect, useState } from "react";
-import { useLocalSearchParams, Stack } from "expo-router";
+import { useLocalSearchParams, Stack, router, useRouter } from "expo-router";
 import { Personal_IP } from "@/constants/ip";
 import axios from "axios";
-import { ProductType } from "@/types/type";
+import {
+  ColorType,
+  ProductType,
+  ProductVariantType,
+  SizeType,
+} from "@/types/type";
 import ImageSlider from "@/components/ImageSlider";
 import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import { useHeaderHeight } from "@react-navigation/elements";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 type Props = {};
 
 const ProductDetails = (props: Props) => {
   const { id } = useLocalSearchParams();
+  const [jwtToken, setJwtToken] = React.useState<string | null>(null);
+  const [userId, setUserId] = React.useState<string | null>(null);
+  const [cartId, setCartId] = React.useState<string | null>(null);
   const [product, setProduct] = useState<ProductType>();
-
+  const [productvariants, setProductVariants] =
+    useState<ProductVariantType[]>();
+  const [color, setColor] = useState<ColorType[]>([]);
+  const [size, setSize] = useState<SizeType[]>([]);
+  const [selectedColor, setSelectedColor] = useState<ColorType>();
+  const [selectedSize, setSelectedSize] = useState<SizeType>();
+  const [availableColors, setAvailableColors] = useState<ColorType[]>([]);
+  const [availableSizes, setAvailableSizes] = useState<SizeType[]>([]);
+  const [availableColorIds, setAvailableColorIds] = useState<number[]>([]);
+  const [availableSizeIds, setAvailableSizeIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadAuthData = async () => {
+      const token = await AsyncStorage.getItem("access_token");
+      const user = await AsyncStorage.getItem("userId");
+      const cart = await AsyncStorage.getItem("cartId");
+      if (token && user) {
+        setJwtToken(token);
+        setUserId(user);
+        setCartId(cart);
+      }
+    };
+    loadAuthData();
+  }, []);
 
   useEffect(() => {
     getProductDetails();
@@ -31,8 +64,7 @@ const ProductDetails = (props: Props) => {
     try {
       const URL = `http://${Personal_IP.data}:3000/product/get-product/${id}`;
       const response = await axios.get(URL);
-      setProduct(response.data.data); // save response data in state
-      console.log("Picture:", response.data.data.picture);
+      setProduct(response.data.data);
       setError(null);
     } catch (err) {
       setError("Failed to load product details.");
@@ -40,7 +72,160 @@ const ProductDetails = (props: Props) => {
     }
   };
 
+  const fetchProductVariant = async () => {
+    try {
+      const response = await fetch(
+        `http://${Personal_IP.data}:3000/product-variants/get-by-productId/${id}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwtToken}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setProductVariants(data);
+
+      const tempColors: ColorType[] = [];
+      const tempSizes: SizeType[] = [];
+
+      if (Array.isArray(data)) {
+        data.forEach((item) => {
+          if (
+            item.color &&
+            !tempColors.some((color) => color.id === item.color.id)
+          ) {
+            tempColors.push(item.color);
+          }
+          if (
+            item.size &&
+            !tempSizes.some((size) => size.size === item.size.size)
+          ) {
+            tempSizes.push(item.size);
+          }
+        });
+
+        setColor(tempColors);
+        setAvailableColors(tempColors);
+        setSize(tempSizes);
+        setAvailableSizes(tempSizes);
+
+        if (tempColors.length > 0) {
+          setSelectedColor(tempColors[0]);
+        }
+        if (tempSizes.length > 0) {
+          setSelectedSize(tempSizes[0]);
+        }
+      } else {
+        console.error("Expected array, got:", typeof data, data);
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error fetching product variant:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchProductVariant();
+  }, []);
+
+  const handleColorSelect = (color: ColorType) => {
+    if (selectedColor?.id === color.id) {
+      setSelectedColor(undefined);
+    } else {
+      setSelectedColor(color);
+    }
+  };
+
+  const handleSizeSelect = (size: SizeType) => {
+    if (selectedSize?.id === size.id) {
+      setSelectedSize(undefined);
+    } else {
+      setSelectedSize(size);
+    }
+  };
+
+  useEffect(() => {
+    if (!productvariants || productvariants.length === 0) {
+      return;
+    }
+
+    if (!selectedColor && !selectedSize) {
+      const allSizeIds = size.map((s) => s.id);
+      const allColorIds = color.map((c) => c.id);
+      setAvailableSizeIds(allSizeIds);
+      setAvailableColorIds(allColorIds);
+      return;
+    }
+
+    if (selectedColor) {
+      const validSizes = productvariants
+        .filter((variant) => variant.color!.id === selectedColor.id)
+        .map((variant) => variant.size!.id);
+      setAvailableSizeIds(validSizes);
+    } else {
+      setAvailableSizeIds(size.map((s) => s.id));
+    }
+
+    if (selectedSize) {
+      const validColors = productvariants
+        .filter((variant) => variant.size!.id === selectedSize.id)
+        .map((variant) => variant.color!.id);
+      setAvailableColorIds(validColors);
+    } else {
+      setAvailableColorIds(color.map((c) => c.id));
+    }
+  }, [selectedColor, selectedSize, productvariants, color, size]);
+
+  const handleAddToCart = async () => {
+    try {
+      const data = {
+        colorId: selectedColor?.id,
+        sizeId: selectedSize?.id,
+        quantity: 1,
+        cartID: cartId ? parseInt(cartId, 10) : null,
+        productId: product?.id,
+        price: product?.price,
+        discount: product?.discount,
+      };
+
+      const response = await fetch(
+        `http://${Personal_IP.data}:3000/cartitem/create-cart-item`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwtToken}`,
+          },
+          body: JSON.stringify(data),
+        }
+      );
+      if (response.ok) {
+        router.push("/(tabs)/");
+        console.log("Item added to the cart in the database");
+        Alert.alert("Sản phẩm đã được thêm vào giỏ hàng!");
+      } else {
+        const error = await response.text();
+        if (error) {
+          Alert.alert("Thêm vào giỏ hàng thất bại!", error);
+        }
+        console.error("Failed to add item to the cart in the database");
+      }
+    } catch (error) {
+      Alert.alert("Vui lòng đăng nhập!");
+      console.error("Error adding item to the cart:", error);
+    }
+  };
+
   const headerHeight = useHeaderHeight();
+  const router = useRouter();
 
   return (
     <>
@@ -82,70 +267,67 @@ const ProductDetails = (props: Props) => {
                 <View style={styles.productVariationType}>
                   <Text style={styles.productVariationTitle}>Color</Text>
                   <View style={styles.productVariationValueWrapper}>
-                    <View
-                      style={{
-                        borderColor: Colors.primary,
-                        borderWidth: 1,
-                        borderRadius: 100,
-                        padding: 2,
-                      }}
-                    >
-                      <View
-                        style={[
-                          styles.productVariationColorValue,
-                          { backgroundColor: "#333" },
-                        ]}
-                      />
-                    </View>
+                    {color.map((c) => {
+                      const isSelected = selectedColor?.id === c.id;
+                      const isAvailable = availableColorIds.includes(c.id);
 
-                    <View
-                      style={[
-                        styles.productVariationColorValue,
-                        { backgroundColor: "#D4AF37" },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.productVariationColorValue,
-                        { backgroundColor: "#F44336" },
-                      ]}
-                    />
-                    <View
-                      style={[
-                        styles.productVariationColorValue,
-                        { backgroundColor: "#2196F3" },
-                      ]}
-                    />
+                      return (
+                        <TouchableOpacity
+                          key={c.id}
+                          disabled={!isAvailable}
+                          onPress={() => {
+                            if (isAvailable) handleColorSelect(c);
+                          }}
+                          style={[
+                            styles.productVariationColorValue,
+                            {
+                              backgroundColor: c.hex,
+                              opacity: isAvailable ? 1 : 0.2,
+                              borderWidth: isSelected ? 3 : 1,
+                              borderColor: isSelected ? "#000" : "#999",
+                            },
+                          ]}
+                        />
+                      );
+                    })}
                   </View>
                 </View>
                 <View>
                   <Text style={styles.productVariationTitle}>Size</Text>
                   <View style={styles.productVariationValueWrapper}>
-                    <View
-                      style={[
-                        styles.productVariationSizeValue,
-                        { borderColor: Colors.primary },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.productVariationSizeValueText,
-                          { color: Colors.primary, fontWeight: "bold" },
-                        ]}
-                      >
-                        S
-                      </Text>
-                    </View>
-                    <View style={styles.productVariationSizeValue}>
-                      <Text style={styles.productVariationSizeValueText}>
-                        M
-                      </Text>
-                    </View>
-                    <View style={styles.productVariationSizeValue}>
-                      <Text style={styles.productVariationSizeValueText}>
-                        L
-                      </Text>
-                    </View>
+                    {size.map((s) => {
+                      const isSelected = selectedSize?.id === s.id;
+                      const isAvailable = availableSizeIds.includes(s.id);
+
+                      return (
+                        <TouchableOpacity
+                          key={s.id}
+                          disabled={!isAvailable}
+                          onPress={() => {
+                            if (isAvailable) handleSizeSelect(s);
+                          }}
+                          style={[
+                            styles.productVariationSizeValue,
+                            {
+                              borderWidth: isSelected ? 2 : 1,
+                              borderColor: isSelected ? "#000" : "#ccc",
+                              backgroundColor: isSelected
+                                ? "#f0f0f0"
+                                : "transparent",
+                              opacity: isAvailable ? 1 : 0.4,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={{
+                              fontWeight: isSelected ? "bold" : "normal",
+                            }}
+                          >
+                            {s.name || `Size: ${s.size || "?"}`}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 </View>
               </View>
@@ -163,14 +345,17 @@ const ProductDetails = (props: Props) => {
               borderWidth: 1,
             },
           ]}
+          onPress={handleAddToCart}
         >
           <Ionicons name="cart-outline" size={20} color={Colors.primary} />
           <Text style={[styles.buttonText, { color: Colors.primary }]}>
             Add to Cart
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Buy Now</Text>
+        <TouchableOpacity style={[styles.button, styles.buttonBuyNow]}>
+          <Text style={[styles.buttonText, { color: Colors.white }]}>
+            Buy Now
+          </Text>
         </TouchableOpacity>
       </View>
     </>
@@ -180,135 +365,135 @@ const ProductDetails = (props: Props) => {
 export default ProductDetails;
 
 const styles = StyleSheet.create({
-  productImg: {
-    width: "100%",
-    height: 200,
-    borderRadius: 15,
-    marginBottom: 10,
-  },
   container: {
-    paddingHorizontal: 20,
+    padding: 16,
+    backgroundColor: "#fff",
+    flex: 1,
   },
   ratingWrapper: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 5,
+    marginBottom: 12,
   },
   rating: {
-    marginLeft: 5,
-    fontSize: 14,
-    fontWeight: "400",
-    color: Colors.gray,
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "400",
-    color: Colors.black,
-    letterSpacing: 0.6,
-    lineHeight: 32,
+    fontSize: 16,
+    marginLeft: 6,
+    color: "#333",
+    fontWeight: "500",
   },
   priceWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    gap: 5,
+    marginTop: 12,
+    marginBottom: 8,
   },
   price: {
-    fontWeight: "600",
-    fontSize: 18,
-    color: Colors.black,
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#E53935",
   },
   priceDiscount: {
-    backgroundColor: Colors.extraLightGray,
-    padding: 5,
-    borderRadius: 5,
+    backgroundColor: "#FFCDD2",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 10,
   },
   priceDiscountText: {
-    fontSize: 14,
-    fontWeight: "400",
-    color: Colors.primary,
+    color: "#C62828",
+    fontSize: 12,
+    fontWeight: "600",
   },
   description: {
-    marginTop: 20,
-    fontSize: 16,
-    fontWeight: "400",
-    color: Colors.black,
-    letterSpacing: 0.6,
-    lineHeight: 24,
+    marginTop: 16,
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#666",
   },
   productVariationWrapper: {
-    flexDirection: "row",
-    marginTop: 20,
-    flexWrap: "wrap",
+    marginTop: 24,
   },
   productVariationType: {
-    width: "50%",
-    gap: 5,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   productVariationTitle: {
-    fontWeight: "500",
     fontSize: 16,
-    color: Colors.black,
+    fontWeight: "600",
+    color: "#222",
+    marginBottom: 10,
   },
   productVariationValueWrapper: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 5,
     flexWrap: "wrap",
+    gap: 10,
   },
   productVariationColorValue: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: Colors.extraLightGray,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    marginRight: 10,
+    marginBottom: 10,
   },
   productVariationSizeValue: {
-    width: 50,
-    height: 30,
-    borderRadius: 5,
-    backgroundColor: Colors.extraLightGray,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    borderColor: "#ccc",
+    marginRight: 10,
+    marginBottom: 10,
   },
-  productVariationSizeValueText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: Colors.black,
+  selectedSize: {
+    backgroundColor: "#000",
+    borderColor: "#000",
   },
+  selectedSizeText: {
+    color: "#fff",
+    fontWeight: "bold",
+  },
+
   buttonWrapper: {
-    position: "absolute",
-    height: 90,
-    padding: 20,
-    bottom: 0,
-    width: "100%",
-    backgroundColor: Colors.white,
     flexDirection: "row",
-    gap: 10,
+    justifyContent: "space-between",
+    position: "absolute",
+    bottom: 16,
+    left: 16,
+    right: 16,
+    gap: 12,
   },
   button: {
     flex: 1,
-    flexDirection: "row",
-    backgroundColor: Colors.primary,
-    height: 40,
-    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 10,
     alignItems: "center",
-    borderRadius: 5,
-    gap: 5,
-    elevation: 5,
-    shadowColor: Colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 4,
+  },
+  buttonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  buttonBuyNow: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 8,
   },
   buttonText: {
-    fontSize: 16,
-    fontWeight: "500",
-    color: Colors.white,
+    fontSize: 15,
+    fontWeight: "600",
   },
 });

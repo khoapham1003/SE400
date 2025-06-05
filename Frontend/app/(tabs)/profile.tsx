@@ -40,8 +40,6 @@ const ProfileScreen = ({ thisUser }: Props) => {
   const fetchUserData = async () => {
     try {
       const apiUrl = `http://${Personal_IP.data}:3000/user/get-user/${userId}`;
-      console.log("Request URL:", apiUrl);
-
       const response = await axios.get(apiUrl, {
         headers: {
           "Content-Type": "application/json",
