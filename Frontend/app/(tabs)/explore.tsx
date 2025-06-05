@@ -52,6 +52,7 @@ const ExploreScreen = (props: Props) => {
       <View style={[styles.container, { marginTop: headerHeight }]}>
         <FlatList
           data={categories}
+          horizontal={false}
           showsHorizontalScrollIndicator={false}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item, index }) => (
