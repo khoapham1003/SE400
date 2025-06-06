@@ -15,7 +15,6 @@ type Props = {
 };
 
 const Categories = ({ categories }: Props) => {
-  console.log("categories", categories);
   return (
     <View style={styles.container}>
       <View style={styles.titleWrapper}>

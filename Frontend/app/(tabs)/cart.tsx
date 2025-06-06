@@ -1,12 +1,14 @@
 import {
+  ActivityIndicator,
   FlatList,
   Image,
+  Modal,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from "react-native";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Personal_IP } from "@/constants/ip";
 import axios from "axios";
 
@@ -18,6 +20,7 @@ import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Checkbox } from "react-native-paper";
+import InputField from "@/components/InputField";
 
 type Props = {
   thisUser: UserType;
@@ -25,6 +28,8 @@ type Props = {
 
 const CartScreen = ({ thisUser }: Props) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingMap, setLoadingMap] = useState<{ [key: number]: boolean }>({});
+
   const headerHeight = useHeaderHeight();
   const [jwtToken, setJwtToken] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
@@ -124,7 +129,7 @@ const CartScreen = ({ thisUser }: Props) => {
   };
 
   const handleQuantityChange = async (itemId: number, value: number) => {
-    setIsLoading(true);
+    setLoadingMap((prev) => ({ ...prev, [itemId]: true }));
     try {
       const requestData = {
         quantity: value,
@@ -144,7 +149,7 @@ const CartScreen = ({ thisUser }: Props) => {
     } catch (error) {
       console.error("Error updating cart item quantity:", error);
     }
-    setIsLoading(false);
+    setLoadingMap((prev) => ({ ...prev, [itemId]: false }));
   };
 
   const handleCheckout = async () => {
@@ -175,12 +180,21 @@ const CartScreen = ({ thisUser }: Props) => {
       const orderResponse = await response.data;
       const orderId = orderResponse.id;
       await AsyncStorage.setItem("orderId", orderId.toString());
+      await AsyncStorage.setItem(
+        "orderSummary",
+        JSON.stringify({
+          totalAmount,
+          totalDiscount,
+          totalQuantity,
+          totalPriceWithDiscount,
+        })
+      );
       await handleCheckoutItems(orderId);
       console.log("Order ID:", orderId);
       router.push("/checkout");
       console.log("Order placed successfully!");
     } catch (error) {
-      console.error("Error placing the order:", error);
+      console.error("Please select at least one item to checkout!");
     }
     setIsLoading(false);
   };
@@ -228,31 +242,32 @@ const CartScreen = ({ thisUser }: Props) => {
     setIsLoading(false);
   };
 
-  const totalAmount = selectedItems.reduce((total, item) => {
-    const isSelected = selectedItems.some(
-      (selected) => selected.id === item.id
-    );
-    const price = item.productVariant?.product?.price || 0;
-    const quantity = item.quantity || 0;
-    return isSelected ? total + price * quantity : total;
-  }, 0);
+  const { totalAmount, totalQuantity, totalDiscount, totalPriceWithDiscount } =
+    cartItems.reduce(
+      (acc, item) => {
+        const isSelected = selectedItems.some(
+          (selected) => selected.id === item.id
+        );
+        if (!isSelected) return acc;
 
-  const totalQuantity = selectedItems.reduce((total, item) => {
-    const isSelected = selectedItems.some(
-      (selected) => selected.id === item.id
-    );
-    return isSelected ? total + item.quantity : total;
-  }, 0);
+        const price = item.productVariant?.product?.price || 0;
+        const quantity = item.quantity || 0;
+        const discount = item.productVariant?.product?.discount || 0;
 
-  const totalDiscount = selectedItems.reduce((total, item) => {
-    const isSelected = selectedItems.some(
-      (selected) => selected.id === item.id
+        acc.totalAmount += price * quantity;
+        acc.totalQuantity += quantity;
+        acc.totalDiscount += (price * quantity * discount) / 100;
+        acc.totalPriceWithDiscount = acc.totalAmount - acc.totalDiscount;
+
+        return acc;
+      },
+      {
+        totalAmount: 0,
+        totalQuantity: 0,
+        totalDiscount: 0,
+        totalPriceWithDiscount: 0,
+      }
     );
-    const price = item.productVariant?.product?.price || 0;
-    const quantity = item.quantity || 0;
-    const discount = item.productVariant?.product?.discount || 0;
-    return isSelected ? total + (price * quantity * discount) / 100 : total;
-  }, 0);
 
   return (
     <>
@@ -277,6 +292,7 @@ const CartScreen = ({ thisUser }: Props) => {
                 item={item}
                 index={index}
                 isSelected={selectedItems.some((i) => i.id === item.id)}
+                isLoadingQty={!!loadingMap[item.id]}
                 onToggle={() => toggleItem(item)}
                 onQuantityChange={(id, quantity) =>
                   handleQuantityChange(id, quantity)
@@ -289,7 +305,16 @@ const CartScreen = ({ thisUser }: Props) => {
       </View>
       <View style={styles.footer}>
         <View style={styles.priceInfoWrapper}>
-          <Text style={styles.totalText}>Total: ${totalAmount}</Text>
+          <Text style={styles.totalText}>
+            Total:
+            {Number((totalAmount || 0) - (totalDiscount || 0)).toLocaleString(
+              "vi-VN",
+              {
+                style: "currency",
+                currency: "VND",
+              }
+            )}
+          </Text>
         </View>
         <TouchableOpacity
           style={styles.checkoutBtn}
@@ -306,6 +331,7 @@ const CartItem = ({
   item,
   index,
   isSelected,
+  isLoadingQty,
   onToggle,
   onQuantityChange,
   onRemove,
@@ -313,10 +339,33 @@ const CartItem = ({
   item: CartItemType;
   index: number;
   isSelected: boolean;
+  isLoadingQty: boolean;
   onToggle: () => void;
   onQuantityChange: (cartItemId: number, newQuantity: number) => void;
   onRemove: () => void;
 }) => {
+  const [editItemId, setEditItemId] = useState<number | null>(null);
+  const [editValue, setEditValue] = useState<string>("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const openEditModal = (itemId: number, currentQty: number) => {
+    setEditItemId(itemId);
+    setEditValue(currentQty.toString());
+    setModalVisible(true);
+  };
+  const handleEditConfirm = () => {
+    const value = parseInt(editValue);
+    if (!isNaN(value) && value > 0) {
+      onQuantityChange(editItemId!, value);
+    }
+    setModalVisible(false);
+    setEditItemId(null);
+    setEditValue("");
+  };
+  const price = item.productVariant?.product?.price;
+  const discount = item.productVariant?.product?.discount;
+  const priceWithDiscount =
+    price && discount ? price * (1 - discount / 100) : 0;
+
   return (
     <View style={styles.itemWrapper}>
       <Checkbox.Android
@@ -340,35 +389,91 @@ const CartItem = ({
           Color: {item.productVariant?.color?.name || "None"} | Size:{" "}
           {item.productVariant?.size?.name || "None"}
         </Text>
-        <Text style={styles.itemPrice}>
-          $
-          {Number(
-            item.productVariant?.product?.price || 0 * item.quantity
-          ).toLocaleString("vi-VN", {
-            style: "currency",
-            currency: "VND",
-          })}
-        </Text>
-
+        <View style={styles.itemPriceWrapper}>
+          <Text style={styles.itemPrice}>
+            {Number((priceWithDiscount || 0) * item.quantity).toLocaleString(
+              "vi-VN",
+              {
+                style: "currency",
+                currency: "VND",
+              }
+            )}
+          </Text>
+          <Text style={styles.itemOriginalPrice}>
+            {Number((price || 0) * item.quantity).toLocaleString("vi-VN", {
+              style: "currency",
+              currency: "VND",
+            })}
+          </Text>
+        </View>
         <View style={styles.itemControlWrapper}>
           <TouchableOpacity onPress={onRemove}>
             <Ionicons name="trash-outline" size={20} color={Colors.red} />
           </TouchableOpacity>
           <View style={styles.quantityControlWrapper}>
             <TouchableOpacity
-              style={styles.quantityBtn}
+              style={[styles.quantityBtn, isLoadingQty && { opacity: 0.3 }]}
               onPress={() => onQuantityChange(item.id, item.quantity - 1)}
-              disabled={item.quantity === 1}
+              disabled={isLoadingQty || item.quantity === 1}
             >
-              <Ionicons name="remove-outline" size={20} color={Colors.black} />
+              {isLoadingQty ? (
+                <ActivityIndicator size="small" color="#999" />
+              ) : (
+                <Ionicons
+                  name="remove-outline"
+                  size={20}
+                  color={Colors.black}
+                />
+              )}
             </TouchableOpacity>
-            <Text style={styles.quantityText}>{item.quantity}</Text>
             <TouchableOpacity
-              style={styles.quantityBtn}
-              onPress={() => onQuantityChange(item.id, item.quantity + 1)}
+              onPress={() => openEditModal(item.id, item.quantity)}
             >
-              <Ionicons name="add-outline" size={20} color={Colors.black} />
+              <Text style={styles.quantityText}>{item.quantity}</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.quantityBtn, isLoadingQty && { opacity: 0.3 }]}
+              onPress={() => onQuantityChange(item.id, item.quantity + 1)}
+              disabled={isLoadingQty}
+            >
+              {isLoadingQty ? (
+                <ActivityIndicator size="small" color="#999" />
+              ) : (
+                <Ionicons name="add-outline" size={20} color={Colors.black} />
+              )}
+            </TouchableOpacity>
+            <Modal
+              visible={modalVisible}
+              animationType="slide"
+              transparent={true}
+              onRequestClose={() => setModalVisible(false)}
+            >
+              <View style={styles.modalBackground}>
+                <View style={styles.modalContainer}>
+                  <Text style={{ fontSize: 16, marginBottom: 10 }}>
+                    Nhập số lượng
+                  </Text>
+                  <InputField
+                    value={editValue}
+                    onChangeText={setEditValue}
+                    keyboardType="numeric"
+                    style={styles.input}
+                  />
+                  <View
+                    style={{ flexDirection: "row", justifyContent: "flex-end" }}
+                  >
+                    <TouchableOpacity onPress={() => setModalVisible(false)}>
+                      <Text style={{ marginHorizontal: 10 }}>Hủy</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={handleEditConfirm}>
+                      <Text style={{ marginHorizontal: 10, color: "blue" }}>
+                        OK
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+            </Modal>
           </View>
         </View>
       </View>
@@ -417,10 +522,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#666",
   },
+  itemPriceWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
   itemPrice: {
     fontSize: 13,
     fontWeight: "500",
     color: Colors.primary,
+  },
+  itemOriginalPrice: {
+    fontSize: 11,
+    color: "#999",
+    textDecorationLine: "line-through",
+    verticalAlign: "bottom",
   },
   itemControlWrapper: {
     flexDirection: "row",
@@ -431,7 +547,7 @@ const styles = StyleSheet.create({
   quantityControlWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 16,
   },
   quantityBtn: {
     padding: 4,
@@ -441,7 +557,10 @@ const styles = StyleSheet.create({
   },
   quantityText: {
     fontSize: 14,
+    width: 32,
+    textAlign: "center",
     fontWeight: "500",
+    paddingHorizontal: 4,
   },
   footer: {
     flexDirection: "row",
@@ -477,5 +596,24 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 12,
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    width: "80%",
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
   },
 });
