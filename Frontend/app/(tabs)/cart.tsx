@@ -38,7 +38,7 @@ const CartScreen = ({ thisUser }: Props) => {
     const loadAuthData = async () => {
       const token = await AsyncStorage.getItem("access_token");
       const user = await AsyncStorage.getItem("userId");
-      const cart = await AsyncStorage.getItem("CartId");
+      const cart = await AsyncStorage.getItem("cartId");
       if (token && user) {
         setJwtToken(token);
         setUserId(user);
