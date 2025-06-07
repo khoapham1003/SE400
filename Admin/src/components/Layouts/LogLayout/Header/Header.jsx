@@ -1,9 +1,6 @@
 import classNames from "classnames/bind";
 import images from "../../../../assets/images";
 
-import MenuSlide from "../../../MenuSlide";
-import SearchBar from "../../../SearchBar";
-import CartButton from "../../../CartButton";
 import { Button } from "antd";
 import { UserOutlined } from "@ant-design/icons";
 import { useNavigate } from "react-router-dom";
