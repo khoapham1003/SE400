@@ -9,12 +9,14 @@ import {
 import React from "react";
 import { CategoryType } from "@/types/type";
 import { Colors } from "@/constants/Colors";
+import { useRouter } from "expo-router";
 
 type Props = {
   categories: CategoryType[];
 };
 
 const Categories = ({ categories }: Props) => {
+    const router = useRouter();
   console.log("categories", categories);
   return (
     <View style={styles.container}>
@@ -30,7 +32,7 @@ const Categories = ({ categories }: Props) => {
         showsHorizontalScrollIndicator={false}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item, index }) => (
-          <TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push(`/AllProduct?categoryId=${item.id}`)}>
             <View style={styles.item}>
               <Image source={{ uri: item.picture }} style={styles.itemImg} />
               <Text>{item.title}</Text>
