@@ -18,7 +18,7 @@ const SignUpScreen = () => {
 
   const handleSignUp = async () => {
     if (password !== confirmPassword) {
-      Alert.alert("Lỗi", "Mật khẩu xác nhận không khớp");
+      Alert.alert("Error", "Confirmation password does not match");
       return;
     }
 
@@ -36,12 +36,12 @@ const SignUpScreen = () => {
 
     try {
       const response = await axios.post(URL, requestBody);
-      Alert.alert("Thành công", "Đăng ký thành công!");
+      Alert.alert("Success", "Registration successful!");
       router.push("/signin"); // hoặc router.replace nếu không muốn quay lại màn đăng ký
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || "Đăng ký thất bại";
-      Alert.alert("Lỗi", errorMessage);
-      console.error("Đăng ký lỗi:", errorMessage);
+      const errorMessage = error?.response?.data?.message || "Registration failed";
+      Alert.alert("Error", errorMessage);
+      console.error("Registration error:", errorMessage);
     }
   };
 
@@ -49,25 +49,25 @@ const SignUpScreen = () => {
     <>
       <Stack.Screen options={{ headerTitle: "Sign Up" }} />
       <View style={styles.container}>
-        <Text style={styles.title}>Tạo Tài Khoản</Text>
+        <Text style={styles.title}>Create Account</Text>
 
         <InputField
-          placeholder="Họ"
+          placeholder="Last Name"
           value={lastName}
           onChangeText={setLastName}
         />
         <InputField
-          placeholder="Tên lót"
+          placeholder="Middle Name"
           value={middleName}
           onChangeText={setMiddleName}
         />
         <InputField
-          placeholder="Tên"
+          placeholder="First Name"
           value={firstName}
           onChangeText={setFirstName}
         />
         <InputField
-          placeholder="Số điện thoại"
+          placeholder="Phone Number"
           value={phoneNumber}
           onChangeText={setPhoneNumber}
           keyboardType="phone-pad"
@@ -79,27 +79,27 @@ const SignUpScreen = () => {
           keyboardType="email-address"
         />
         <InputField
-          placeholder="Mật khẩu"
+          placeholder="Password"
           value={password}
           onChangeText={setPassword}
           secureTextEntry={true}
         />
         <InputField
-          placeholder="Xác nhận mật khẩu"
+          placeholder="Confirm Password"
           value={confirmPassword}
           onChangeText={setConfirmPassword}
           secureTextEntry={true}
         />
 
         <TouchableOpacity style={styles.btn} onPress={handleSignUp}>
-          <Text style={styles.btnTxt}>Đăng ký</Text>
+          <Text style={styles.btnTxt}>Register</Text>
         </TouchableOpacity>
 
         <Text style={styles.loginTxt}>
-          Bạn đã có tài khoản?{" "}
+          You already have an account?{" "}
           <Link href={"/signin"} asChild>
             <TouchableOpacity>
-              <Text style={styles.loginTxtSpan}>Đăng nhập</Text>
+              <Text style={styles.loginTxtSpan}>Log in</Text>
             </TouchableOpacity>
           </Link>
         </Text>
