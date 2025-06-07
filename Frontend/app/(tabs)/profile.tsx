@@ -67,18 +67,18 @@ const ProfileScreen = ({ thisUser }: Props) => {
   }, [userId, jwtToken]);
 
   const handleEditProfile = () => {
-    console.log('ProfileScreen - userId:', userId);
-    console.log('ProfileScreen - userData:', userData);
+    console.log("ProfileScreen - userId:", userId);
+    console.log("ProfileScreen - userData:", userData);
 
     router.push({
-      pathname: '/EditProfile',
+      pathname: "/EditProfile",
       params: {
         id: userId,
-        firstName: userData?.firstName || '',
-        middleName: userData?.middleName || '',
-        lastName: userData?.lastName || '',
-        phoneNumber: userData?.phoneNumber || '',
-      }
+        firstName: userData?.firstName || "",
+        middleName: userData?.middleName || "",
+        lastName: userData?.lastName || "",
+        phoneNumber: userData?.phoneNumber || "",
+      },
     });
   };
 
@@ -131,7 +131,16 @@ const ProfileScreen = ({ thisUser }: Props) => {
             <Ionicons name="settings-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity> */}
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={async () => {
+              await AsyncStorage.removeItem("email");
+              await AsyncStorage.removeItem("cartId");
+              await AsyncStorage.removeItem("userId");
+              await AsyncStorage.removeItem("role");
+              router.push("/signin");
+            }}
+          >
             <Ionicons name="log-out-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>

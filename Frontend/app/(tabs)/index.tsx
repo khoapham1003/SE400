@@ -59,7 +59,8 @@ const HomeScreen = (props: Props) => {
   };
 
   const getSaleProducts = async () => {
-    const URL = "http://" + Personal_IP.data + ":3000/product/get-all-products";
+    const URL =
+      "http://" + Personal_IP.data + ":3000/product/get-all-products-flashsale";
     const response = await axios.get(URL).catch((error) => {
       console.log(
         "There has been a problem with your fetch operation: " + error.message

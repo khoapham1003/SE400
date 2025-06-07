@@ -364,7 +364,7 @@ const CartItem = ({
   const price = item.productVariant?.product?.price;
   const discount = item.productVariant?.product?.discount;
   const priceWithDiscount =
-    price && discount ? price * (1 - discount / 100) : 0;
+    price && discount ? price * (1 - discount / 100) : price;
 
   return (
     <View style={styles.itemWrapper}>
@@ -399,12 +399,14 @@ const CartItem = ({
               }
             )}
           </Text>
-          <Text style={styles.itemOriginalPrice}>
-            {Number((price || 0) * item.quantity).toLocaleString("vi-VN", {
-              style: "currency",
-              currency: "VND",
-            })}
-          </Text>
+          {!(discount === 0) && (
+            <Text style={styles.itemOriginalPrice}>
+              {Number((price || 0) * item.quantity).toLocaleString("vi-VN", {
+                style: "currency",
+                currency: "VND",
+              })}
+            </Text>
+          )}
         </View>
         <View style={styles.itemControlWrapper}>
           <TouchableOpacity onPress={onRemove}>
