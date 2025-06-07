@@ -213,7 +213,7 @@ function ForgotPassword() {
           </span>
           <a
             className="logup_nav"
-            href="/sign_in"
+            href="/"
             style={{ color: "#CF4330", fontSize: "0.75rem" }}
           >
             Đăng nhập

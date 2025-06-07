@@ -43,28 +43,6 @@ function Header() {
 
   const menu = (
     <Menu>
-      <Menu.Item
-        key="profile"
-        icon={<UserOutlined />}
-        onClick={() => {
-          navigate("/profile_page");
-        }}
-      >
-        Thông tin tài khoản
-      </Menu.Item>
-
-      {isAdmin() && (
-        <Menu.Item
-          key="admin"
-          icon={<UserOutlined />}
-          onClick={() => {
-            navigate("/admin");
-          }}
-        >
-          Admin
-        </Menu.Item>
-      )}
-
       <Menu.Item key="logout" icon={<LogoutOutlined />} onClick={handleLogout}>
         Đăng xuất
       </Menu.Item>

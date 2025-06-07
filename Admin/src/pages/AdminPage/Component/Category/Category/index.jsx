@@ -257,6 +257,9 @@ function CategoryManagement() {
           <Form.Item name="content" label="Content">
             <TextArea />
           </Form.Item>
+          <Form.Item name="picture" label="Hình ảnh danh mục (URL)">
+            <Input />
+          </Form.Item>
           <Form.Item name="slug" label="Slug">
             <Input />
           </Form.Item>
@@ -280,6 +283,9 @@ function CategoryManagement() {
           </Form.Item>
           <Form.Item name="content" label="Content">
             <TextArea />
+          </Form.Item>
+          <Form.Item name="picture" label="Hình ảnh danh mục (URL)">
+            <Input />
           </Form.Item>
           <Form.Item name="slug" label="Slug">
             <Input />

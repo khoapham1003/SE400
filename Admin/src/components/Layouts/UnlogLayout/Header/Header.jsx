@@ -34,7 +34,7 @@ function Header() {
               backgroundColor: "#F8F9FA",
             }}
             onClick={() => {
-              navigate("/sign_in");
+              navigate("/");
             }}
           >
             <span style={{ fontSize: "1rem" }}>Đăng nhập</span>
