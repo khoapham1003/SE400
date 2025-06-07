@@ -11,7 +11,7 @@ export const icon = {
   notifications: ({ color }: { color: string }) => (
     <Ionicons name="cube-outline" size={22} color={color} />
   ),
-  cart: ({ color }: { color: string }) => (s
+  cart: ({ color }: { color: string }) => (
     <Ionicons name="cart-outline" size={22} color={color} />
   ),
   profile: ({ color }: { color: string }) => (
