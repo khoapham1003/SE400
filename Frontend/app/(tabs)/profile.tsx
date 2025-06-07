@@ -82,6 +82,41 @@ const ProfileScreen = ({ thisUser }: Props) => {
     });
   };
 
+  const handleLogout = () => {
+    Alert.alert(
+      "Logout",
+      "Are you sure you want to logout?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        {
+          text: "Logout",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Clear all stored authentication data
+              await AsyncStorage.multiRemove(['access_token', 'userId']);
+
+              // Reset local state
+              setJwtToken(null);
+              setUserId(null);
+              setUserData(null);
+
+              // Navigate to login screen (replace with your actual login route)
+              router.replace('/login'); // or router.replace('/(auth)/login') depending on your routing structure
+
+            } catch (error) {
+              console.error('Error during logout:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const headerHeight = useHeaderHeight();
 
   return (
@@ -99,7 +134,7 @@ const ProfileScreen = ({ thisUser }: Props) => {
           <Text style={styles.userName}>{userData?.firstName}</Text>
         </View>
         <View style={styles.buttonWrapper}>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={() => router.push('/notifications')}>
             <Ionicons name="person-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Your Order</Text>
           </TouchableOpacity>
@@ -131,7 +166,7 @@ const ProfileScreen = ({ thisUser }: Props) => {
             <Ionicons name="settings-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Settings</Text>
           </TouchableOpacity> */}
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Logout</Text>
           </TouchableOpacity>

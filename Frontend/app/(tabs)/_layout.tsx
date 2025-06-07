@@ -30,7 +30,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          title: "Notification",
+          title: "Order History",
           // tabBarIcon: ({ color }) => (
           //   <Ionicons name="notifications-outline" size={22} color={color} />
           // ),
