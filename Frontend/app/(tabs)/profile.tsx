@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import React, { useEffect } from "react";
-import { Stack } from "expo-router";
+import { Stack, useRouter } from "expo-router";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
@@ -22,9 +22,11 @@ type Props = {
 };
 
 const ProfileScreen = ({ thisUser }: Props) => {
+  const router = useRouter();
   const [jwtToken, setJwtToken] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
   const [userData, setUserData] = React.useState<UserType | null>(null);
+
   useEffect(() => {
     const loadAuthData = async () => {
       const token = await AsyncStorage.getItem("access_token");
@@ -57,11 +59,29 @@ const ProfileScreen = ({ thisUser }: Props) => {
       );
     }
   };
+
   useEffect(() => {
     if (userId && jwtToken) {
       fetchUserData();
     }
   }, [userId, jwtToken]);
+
+  const handleEditProfile = () => {
+    console.log('ProfileScreen - userId:', userId);
+    console.log('ProfileScreen - userData:', userData);
+
+    router.push({
+      pathname: '/EditProfile',
+      params: {
+        id: userId,
+        firstName: userData?.firstName || '',
+        middleName: userData?.middleName || '',
+        lastName: userData?.lastName || '',
+        phoneNumber: userData?.phoneNumber || '',
+      }
+    });
+  };
+
   const headerHeight = useHeaderHeight();
 
   return (
@@ -87,7 +107,7 @@ const ProfileScreen = ({ thisUser }: Props) => {
             <Ionicons name="card-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Payment History</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity style={styles.button} onPress={handleEditProfile}>
             <Ionicons name="pencil-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Edit Profile</Text>
           </TouchableOpacity>

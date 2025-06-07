@@ -42,8 +42,8 @@ const ExploreScreen = (props: Props) => {
   };
 
   const onPressCategory = (categoryId: number) => {
-    router.dismissAll();
-    router.push("/(tabs)");
+    // Fixed: Navigate to AllProduct page with categoryId parameter
+    router.push(`/AllProduct?categoryId=${categoryId}`);
   };
 
   return (
