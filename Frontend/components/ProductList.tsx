@@ -9,21 +9,43 @@ import React from "react";
 import ProductItem from "./ProductItem";
 import { Colors } from "@/constants/Colors";
 import { ProductType } from "@/types/type";
+import { useRouter } from "expo-router";
 
 type Props = {
   products: ProductType[];
   flatlist?: boolean;
+  categoryId?: number | null; // Optional prop to pass category context
+  hideHeader?: boolean; // Optional prop to hide the "For You" header section
 };
 
-const ProductList = ({ products, flatlist = true }: Props) => {
+const ProductList = ({
+  products,
+  flatlist = true,
+  categoryId = null,
+  hideHeader = false
+}: Props) => {
+  const router = useRouter();
+
+  const handleSeeAllPress = () => {
+    if (categoryId) {
+      // Navigate to AllProduct with specific category
+      router.push(`/AllProduct?categoryId=${categoryId}`);
+    } else {
+      // Navigate to AllProduct showing all products
+      router.push('/AllProduct');
+    }
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.titleWrapper}>
-        <Text style={styles.title}>For You</Text>
-        <TouchableOpacity>
-          <Text style={styles.titleBtn}>See All</Text>
-        </TouchableOpacity>
-      </View>
+      {!hideHeader && (
+        <View style={styles.titleWrapper}>
+          <Text style={styles.title}>For You</Text>
+          <TouchableOpacity onPress={handleSeeAllPress}>
+            <Text style={styles.titleBtn}>See All</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       {flatlist ? (
         <FlatList
           data={products}
@@ -73,15 +95,15 @@ const styles = StyleSheet.create({
     color: Colors.black,
     letterSpacing: 0.6,
   },
-  itemsWrapper:{
-      width: '100%',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'stretch'
+  itemsWrapper: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'stretch'
   },
   productWrapper: {
-      width: '50%',
-      paddingLeft: 5,
-      marginBottom: 20
+    width: '50%',
+    paddingLeft: 5,
+    marginBottom: 20
   }
 });
