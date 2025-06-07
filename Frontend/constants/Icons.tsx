@@ -9,9 +9,9 @@ export const icon = {
     <Ionicons name="search-outline" size={22} color={color} />
   ),
   notifications: ({ color }: { color: string }) => (
-    <Ionicons name="notifications-outline" size={22} color={color} />
+    <Ionicons name="cube-outline" size={22} color={color} />
   ),
-  cart: ({ color }: { color: string }) => (
+  cart: ({ color }: { color: string }) => (s
     <Ionicons name="cart-outline" size={22} color={color} />
   ),
   profile: ({ color }: { color: string }) => (
