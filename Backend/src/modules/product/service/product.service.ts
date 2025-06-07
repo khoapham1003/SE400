@@ -29,15 +29,13 @@ export class ProductService {
 
   async findFlashSale(): Promise<Product[]> {
     const now = new Date();
-
-    return await this.productRepository.find({
-      where: {
-        discount: MoreThan(0),
-        startsAt: LessThan(now),
-        endsAt: MoreThan(now),
-        shop: true
-      },
-    });
+    return await this.productRepository
+      .createQueryBuilder('product')
+      .where('product.discount > 0')
+      .andWhere('product.startsAt < :now', { now })
+      .andWhere('product.endsAt > :now', { now })
+      .andWhere('product.shop = true')
+      .getMany();
   }
 
   async findAllAdmin(): Promise<Product[]> {
@@ -74,15 +72,15 @@ export class ProductService {
     updateProductDto: UpdateProductDto,
   ): Promise<Product> {
     const product = await this.productRepository.findOne({ where: { id } });
-  
+
     if (!product) {
       throw new NotFoundException(`Product with ID ${id} not found`);
     }
-  
+
     const updatedProduct = {
       ...product,
       ...updateProductDto,
-  };
+    };
 
     return await this.productRepository.save(updatedProduct);
   }
@@ -92,16 +90,15 @@ export class ProductService {
     updateData: Partial<Product>,
   ): Promise<Product> {
     const product = await this.productRepository.findOne({ where: { id } });
-  
+
     if (!product) {
       throw new Error('Product not found');
     }
-  
+
     Object.assign(product, updateData);
-  
+
     return await this.productRepository.save(product);
   }
-  
 
   async remove(id: number): Promise<boolean> {
     const product = await this.findOne(id);
