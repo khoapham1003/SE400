@@ -12,6 +12,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { Link } from "expo-router";
+import { formatPrice } from "@/utils/format";
 
 type Props = {
   item: ProductType;
@@ -40,13 +41,27 @@ const ProductItem = ({ item, index }: Props) => {
             <Ionicons name="heart-outline" size={22} color={Colors.black} />
           </TouchableOpacity>
           <View style={styles.productInfo}>
-            <Text style={styles.price}>${item.price}</Text>
-            <View style={styles.ratingWrapper}>
-              <Ionicons name="star" size={20} color="#D5AF37" />
-              <Text style={styles.rating}>4.6</Text>
-            </View>
+            <Text style={styles.title}>{item.title}</Text>
+
+            <Text style={styles.priceFinal}>
+              {formatPrice(
+                (item.price || 0) * (1 - (item.discount || 0) / 100)
+              )}
+            </Text>
+
+            {item.discount > 0 && (
+              <View style={styles.priceMetaWrapper}>
+                <Text style={styles.priceOriginal}>
+                  {formatPrice(item.price)}
+                </Text>
+                <View style={styles.priceDiscountBadge}>
+                  <Text style={styles.priceDiscountText}>
+                    {item.discount}% OFF
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
-          <Text style={styles.title}>{item.title}</Text>
         </Animated.View>
       </TouchableOpacity>
     </Link>
@@ -79,11 +94,7 @@ const styles = StyleSheet.create({
     color: Colors.black,
     letterSpacing: 1.1,
   },
-  productInfo: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
+
   price: {
     fontSize: 16,
     fontWeight: "700",
@@ -97,5 +108,49 @@ const styles = StyleSheet.create({
   rating: {
     fontSize: 14,
     color: Colors.gray,
+  },
+  priceDiscount: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 10,
+  },
+
+  productInfo: {
+    marginTop: 12,
+    flexDirection: "column",
+    alignItems: "flex-start",
+    gap: 4,
+  },
+
+  priceFinal: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: Colors.primary,
+  },
+
+  priceMetaWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
+  priceOriginal: {
+    fontSize: 14,
+    color: "#999",
+    textDecorationLine: "line-through",
+  },
+
+  priceDiscountBadge: {
+    backgroundColor: "#FF5252",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+
+  priceDiscountText: {
+    color: "#fff",
+    fontWeight: "600",
+    fontSize: 12,
   },
 });

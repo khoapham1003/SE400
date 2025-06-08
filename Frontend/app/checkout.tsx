@@ -136,7 +136,7 @@ const Checkout = () => {
         setTotalAmount(summary.totalAmount);
         setTotalDiscount(summary.totalDiscount);
         setTotalQuantity(summary.totalQuantity);
-        setTotalPriceWithDiscount(summary.totalPriceWithDiscount);
+        setTotalPriceWithDiscount(summary.totalPriceWithDiscount + deliveryFee);
       }
     };
 

@@ -17,20 +17,30 @@ const width = Dimensions.get("screen").width;
 const ImageSlider = ({ image }: Props) => {
   return (
     <View
-      style={{ width: width, justifyContent: "center", alignItems: "center" }}
+      style={{
+        width: width,
+        paddingVertical: 8,
+        backgroundColor: "#fff",
+        alignItems: "center",
+      }}
     >
       <FlatList
         data={image}
         renderItem={({ item }) => (
           <View>
             <Image
-              style={{ width: width, height: 300 }}
+              style={{
+                width: width,
+                height: width * 0.9,
+                resizeMode: "contain",
+                alignSelf: "center",
+              }}
               source={
                 item
                   ? { uri: item }
                   : require("@/assets/images/no-image-available.jpg")
               }
-            ></Image>
+            />
           </View>
         )}
         horizontal

@@ -17,8 +17,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 type Props = {};
 
 const SignInScreen = (props: Props) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("admin@admin.com");
+  const [password, setPassword] = useState("Admin@1234");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {

@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Colors } from "@/constants/Colors";
 import { useHeaderHeight } from "@react-navigation/elements";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { formatPrice } from "@/utils/format";
 
 type Props = {};
 
@@ -256,7 +257,9 @@ const ProductDetails = (props: Props) => {
               </View>
               <Text>{product.title}</Text>
               <View style={styles.priceWrapper}>
-                <Text style={styles.price}>${product.price}</Text>
+                <Text style={styles.price}>
+                  {formatPrice(product.price || 0)}
+                </Text>
                 <View style={styles.priceDiscount}>
                   <Text style={styles.priceDiscountText}>
                     {product.discount}% Off

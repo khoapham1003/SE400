@@ -83,38 +83,33 @@ const ProfileScreen = ({ thisUser }: Props) => {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      "Logout",
-      "Are you sure you want to logout?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel"
-        },
-        {
-          text: "Logout",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              // Clear all stored authentication data
-              await AsyncStorage.multiRemove(['access_token', 'userId']);
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            // Clear all stored authentication data
+            await AsyncStorage.multiRemove(["access_token", "userId"]);
 
-              // Reset local state
-              setJwtToken(null);
-              setUserId(null);
-              setUserData(null);
+            // Reset local state
+            setJwtToken(null);
+            setUserId(null);
+            setUserData(null);
 
-              // Navigate to login screen (replace with your actual login route)
-              router.replace('/login'); // or router.replace('/(auth)/login') depending on your routing structure
-
-            } catch (error) {
-              console.error('Error during logout:', error);
-              Alert.alert('Error', 'Failed to logout. Please try again.');
-            }
+            // Navigate to login screen (replace with your actual login route)
+            router.replace("/signin"); // or router.replace('/(auth)/login') depending on your routing structure
+          } catch (error) {
+            console.error("Error during logout:", error);
+            Alert.alert("Error", "Failed to logout. Please try again.");
           }
-        }
-      ]
-    );
+        },
+      },
+    ]);
   };
 
   const headerHeight = useHeaderHeight();
