@@ -9,6 +9,7 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import axios from "axios";
 import { CategoryType, ProductType } from "@/types/type";
@@ -18,12 +19,35 @@ import ProductList from "@/components/ProductList";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { Colors } from "@/constants/Colors";
 
+// Sort options enum
+enum SortOption {
+  DEFAULT = "default",
+  NAME_ASC = "name_asc",
+  NAME_DESC = "name_desc",
+  PRICE_LOW_HIGH = "price_low_high",
+  PRICE_HIGH_LOW = "price_high_low",
+  NEWEST = "newest",
+  OLDEST = "oldest",
+}
+
+const sortOptions = [
+  { key: SortOption.DEFAULT, label: "Default" },
+  { key: SortOption.NAME_ASC, label: "Name (A-Z)" },
+  { key: SortOption.NAME_DESC, label: "Name (Z-A)" },
+  { key: SortOption.PRICE_LOW_HIGH, label: "Price: Low to High" },
+  { key: SortOption.PRICE_HIGH_LOW, label: "Price: High to Low" },
+  { key: SortOption.NEWEST, label: "Newest First" },
+  { key: SortOption.OLDEST, label: "Oldest First" },
+];
+
 const AllProduct = () => {
   const [products, setProducts] = useState<ProductType[]>([]);
   const [categories, setCategories] = useState<CategoryType[]>([]);
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [sortOption, setSortOption] = useState<SortOption>(SortOption.DEFAULT);
+  const [showSortModal, setShowSortModal] = useState(false);
 
   const params = useLocalSearchParams();
   const router = useRouter();
@@ -120,20 +144,68 @@ const AllProduct = () => {
     getAllProducts();
   };
 
-  // Filter products based on search text only (category filtering is handled by API)
-  // Add safety check to ensure products is always an array
-  const filteredProducts = (products || []).filter(product => {
-    if (searchText.trim() === "") return true;
-    return product.title.toLowerCase().includes(searchText.toLowerCase());
-  });
+  // Sort products function
+  const sortProducts = (products: ProductType[], sortOption: SortOption): ProductType[] => {
+    const sortedProducts = [...products];
+
+    switch (sortOption) {
+      case SortOption.NAME_ASC:
+        return sortedProducts.sort((a, b) => a.title.localeCompare(b.title));
+
+      case SortOption.NAME_DESC:
+        return sortedProducts.sort((a, b) => b.title.localeCompare(a.title));
+
+      case SortOption.PRICE_LOW_HIGH:
+        return sortedProducts.sort((a, b) => (a.price || 0) - (b.price || 0));
+
+      case SortOption.PRICE_HIGH_LOW:
+        return sortedProducts.sort((a, b) => (b.price || 0) - (a.price || 0));
+
+      case SortOption.NEWEST:
+        return sortedProducts.sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.created_at || 0);
+          const dateB = new Date(b.createdAt || b.created_at || 0);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+      case SortOption.OLDEST:
+        return sortedProducts.sort((a, b) => {
+          const dateA = new Date(a.createdAt || a.created_at || 0);
+          const dateB = new Date(b.createdAt || b.created_at || 0);
+          return dateA.getTime() - dateB.getTime();
+        });
+
+      case SortOption.DEFAULT:
+      default:
+        return sortedProducts; // Return original order
+    }
+  };
+
+  // Filter and sort products
+  const processedProducts = (() => {
+    // First filter by search text
+    const filtered = (products || []).filter(product => {
+      if (searchText.trim() === "") return true;
+      return product.title.toLowerCase().includes(searchText.toLowerCase());
+    });
+
+    // Then sort the filtered results
+    return sortProducts(filtered, sortOption);
+  })();
+
+  const handleSortSelection = (option: SortOption) => {
+    setSortOption(option);
+    setShowSortModal(false);
+  };
 
   console.log("🔍 Current state:");
   console.log("📦 products:", products);
   console.log("📊 products length:", products?.length || 0);
   console.log("🔍 searchText:", searchText);
   console.log("🏷️ selectedCategory:", selectedCategory);
-  console.log("📋 filteredProducts:", filteredProducts);
-  console.log("📈 filteredProducts length:", filteredProducts.length);
+  console.log("📋 processedProducts:", processedProducts);
+  console.log("📈 processedProducts length:", processedProducts.length);
+  console.log("🔄 sortOption:", sortOption);
   console.log("⏳ isLoading:", isLoading);
 
   if (isLoading) {
@@ -189,21 +261,33 @@ const AllProduct = () => {
         />
       </View>
 
-      {/* Show results count */}
-      <View style={styles.resultsContainer}>
-        <Text style={styles.resultsText}>
-          {filteredProducts.length} product{filteredProducts.length !== 1 ? 's' : ''} found
-          {selectedCategory && (
-            <Text style={styles.categoryInfo}>
-              {' '}in {categories.find(cat => cat.id === selectedCategory)?.title}
-            </Text>
-          )}
-        </Text>
+      {/* Sort and Results Section */}
+      <View style={styles.controlsContainer}>
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsText}>
+            {processedProducts.length} product{processedProducts.length !== 1 ? 's' : ''} found
+            {selectedCategory && (
+              <Text style={styles.categoryInfo}>
+                {' '}in {categories.find(cat => cat.id === selectedCategory)?.title}
+              </Text>
+            )}
+          </Text>
+        </View>
+
+        <TouchableOpacity
+          style={styles.sortButton}
+          onPress={() => setShowSortModal(true)}
+        >
+          <Text style={styles.sortButtonText}>
+            Sort: {sortOptions.find(opt => opt.key === sortOption)?.label}
+          </Text>
+          <Text style={styles.sortIcon}>⇅</Text>
+        </TouchableOpacity>
       </View>
 
-      <ProductList products={filteredProducts} flatlist={false} />
+      <ProductList products={processedProducts} flatlist={false} />
 
-      {filteredProducts.length === 0 && !isLoading && (
+      {processedProducts.length === 0 && !isLoading && (
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyText}>No products found</Text>
           <Text style={styles.emptySubText}>
@@ -214,6 +298,52 @@ const AllProduct = () => {
           </Text>
         </View>
       )}
+
+      {/* Sort Modal */}
+      <Modal
+        visible={showSortModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={() => setShowSortModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Sort Products</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowSortModal(false)}
+              >
+                <Text style={styles.closeButtonText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <FlatList
+              data={sortOptions}
+              keyExtractor={(item) => item.key}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.sortOptionButton,
+                    sortOption === item.key && styles.sortOptionButtonSelected
+                  ]}
+                  onPress={() => handleSortSelection(item.key)}
+                >
+                  <Text style={[
+                    styles.sortOptionText,
+                    sortOption === item.key && styles.sortOptionTextSelected
+                  ]}>
+                    {item.label}
+                  </Text>
+                  {sortOption === item.key && (
+                    <Text style={styles.checkMark}>✓</Text>
+                  )}
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -235,6 +365,7 @@ const styles = StyleSheet.create({
   },
   categoriesList: {
     marginBottom: 20,
+    paddingLeft: 10,
   },
   categoryButton: {
     marginRight: 10,
@@ -264,8 +395,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
-  resultsContainer: {
+  controlsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 15,
+  },
+  resultsContainer: {
+    flex: 1,
+    paddingLeft: 10,
   },
   resultsText: {
     fontSize: 16,
@@ -275,6 +413,25 @@ const styles = StyleSheet.create({
   categoryInfo: {
     fontWeight: "400",
     color: "#666",
+  },
+  sortButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  sortButtonText: {
+    fontSize: 14,
+    color: '#333',
+    marginRight: 6,
+  },
+  sortIcon: {
+    fontSize: 14,
+    color: '#666',
   },
   emptyContainer: {
     alignItems: 'center',
@@ -291,5 +448,63 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: "#999",
     textAlign: 'center',
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 30,
+    maxHeight: '50%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+  },
+  closeButton: {
+    padding: 4,
+  },
+  closeButtonText: {
+    fontSize: 18,
+    color: '#666',
+  },
+  sortOptionButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  sortOptionButtonSelected: {
+    backgroundColor: '#f8f9ff',
+  },
+  sortOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  sortOptionTextSelected: {
+    color: Colors.primary,
+    fontWeight: '500',
+  },
+  checkMark: {
+    fontSize: 16,
+    color: Colors.primary,
+    fontWeight: 'bold',
   },
 });
