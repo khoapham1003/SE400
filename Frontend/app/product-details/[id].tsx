@@ -211,16 +211,16 @@ const ProductDetails = (props: Props) => {
       if (response.ok) {
         router.push("/(tabs)/");
         console.log("Item added to the cart in the database");
-        Alert.alert("Sản phẩm đã được thêm vào giỏ hàng!");
+        Alert.alert("Product has been added to cart!");
       } else {
         const error = await response.text();
         if (error) {
-          Alert.alert("Thêm vào giỏ hàng thất bại!", error);
+          Alert.alert("Add to cart failed!", error);
         }
         console.error("Failed to add item to the cart in the database");
       }
     } catch (error) {
-      Alert.alert("Vui lòng đăng nhập!");
+      Alert.alert("Please login!");
       console.error("Error adding item to the cart:", error);
     }
   };
