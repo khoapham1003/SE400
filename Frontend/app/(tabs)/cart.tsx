@@ -67,10 +67,18 @@ const CartScreen = ({ thisUser }: Props) => {
 
       setCartItems(cartDataResponse.data);
     } catch (error: any) {
-      console.error(
-        "Error fetching Cart data:",
-        error?.response?.data || error.message
-      );
+      // Handle 404 error (empty cart) gracefully
+      if (error.response?.status === 404) {
+            setCartItems([]);
+            setSelectedItems([]);
+            // Don't log anything for empty cart - this is expected behavior
+          } else {
+            // Only log unexpected errors
+            console.error(
+              "Unexpected error fetching Cart data:",
+              error?.response?.data || error.message
+            );
+          }
     }
     setIsLoading(false);
   };
@@ -270,56 +278,90 @@ const CartScreen = ({ thisUser }: Props) => {
       }
     );
 
+  // Empty cart component
+  const EmptyCart = () => (
+    <View style={styles.emptyCartContainer}>
+      <Ionicons name="cart-outline" size={80} color={Colors.lightGray} />
+      <Text style={styles.emptyCartTitle}>Your cart is empty</Text>
+      <Text style={styles.emptyCartSubtitle}>
+        Add some items to get started
+      </Text>
+      <TouchableOpacity
+        style={styles.continueShoppingBtn}
+        onPress={() => router.push("/(tabs)/")}
+      >
+        <Text style={styles.continueShoppingText}>Continue Shopping</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <>
       <Stack.Screen options={{ headerShown: true, headerTransparent: true }} />
       <View style={[styles.container, { marginTop: headerHeight }]}>
-        <View style={styles.chooseAllWrapper}>
-          <Checkbox.Android
-            status={isAllSelected ? "checked" : "unchecked"}
-            onPress={() => toggleAll(!isAllSelected)}
-          />
-          <Text>Chọn tất cả</Text>
-        </View>
-        <FlatList
-          data={cartItems}
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item, index }) => (
-            <Animated.View
-              entering={FadeInDown.delay(300 + index * 100).duration(500)}
-            >
-              <CartItem
-                item={item}
-                index={index}
-                isSelected={selectedItems.some((i) => i.id === item.id)}
-                isLoadingQty={!!loadingMap[item.id]}
-                onToggle={() => toggleItem(item)}
-                onQuantityChange={(id, quantity) =>
-                  handleQuantityChange(id, quantity)
-                }
-                onRemove={() => handleRemoveItem(item.id)}
+        {isLoading ? (
+          // Show loading indicator while fetching data
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>Loading your cart...</Text>
+          </View>
+        ) : cartItems.length === 0 ? (
+          // Only show empty cart after loading is complete
+          <EmptyCart />
+        ) : (
+          // Show cart items after loading is complete
+          <>
+            <View style={styles.chooseAllWrapper}>
+              <Checkbox.Android
+                status={isAllSelected ? "checked" : "unchecked"}
+                onPress={() => toggleAll(!isAllSelected)}
               />
-            </Animated.View>
-          )}
-        />
+              <Text>Chọn tất cả</Text>
+            </View>
+            <FlatList
+              data={cartItems}
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item, index }) => (
+                <Animated.View
+                  entering={FadeInDown.delay(300 + index * 100).duration(500)}
+                >
+                  <CartItem
+                    item={item}
+                    index={index}
+                    isSelected={selectedItems.some((i) => i.id === item.id)}
+                    isLoadingQty={!!loadingMap[item.id]}
+                    onToggle={() => toggleItem(item)}
+                    onQuantityChange={(id, quantity) =>
+                      handleQuantityChange(id, quantity)
+                    }
+                    onRemove={() => handleRemoveItem(item.id)}
+                  />
+                </Animated.View>
+              )}
+            />
+          </>
+        )}
       </View>
-      <View style={styles.footer}>
-        <View style={styles.priceInfoWrapper}>
-          <Text style={styles.totalText}>
-            Total:
-            {formatPrice((totalAmount || 0) - (totalDiscount || 0))}
-          </Text>
+      {/* Only show footer when not loading and has items */}
+      {!isLoading && cartItems.length > 0 && (
+        <View style={styles.footer}>
+          <View style={styles.priceInfoWrapper}>
+            <Text style={styles.totalText}>
+              Total:
+              {formatPrice((totalAmount || 0) - (totalDiscount || 0))}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.checkoutBtn}
+            onPress={() => handleCheckout()}
+          >
+            <Text style={styles.checkoutBtnText}>
+              {isLoading ? "Processing..." : "Checkout"}
+            </Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.checkoutBtn}
-          onPress={() => handleCheckout()}
-        >
-          <Text style={styles.checkoutBtnText}>
-            {isLoading ? "Processing..." : "Checkout"}
-          </Text>
-        </TouchableOpacity>
-      </View>
+      )}
     </>
   );
 };
@@ -472,6 +514,7 @@ const CartItem = ({
 };
 
 export default CartScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -605,5 +648,49 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
+  },
+  // Loading styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: Colors.gray,
+    marginTop: 12,
+    textAlign: "center",
+  },
+  // Empty cart styles
+  emptyCartContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+  },
+  emptyCartTitle: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: Colors.black,
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  emptyCartSubtitle: {
+    fontSize: 16,
+    color: Colors.gray,
+    textAlign: "center",
+    marginBottom: 30,
+  },
+  continueShoppingBtn: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  continueShoppingText: {
+    color: Colors.white,
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

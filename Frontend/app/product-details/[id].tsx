@@ -5,6 +5,7 @@ import {
   View,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import React, { useEffect, useState } from "react";
 import { useLocalSearchParams, Stack, router, useRouter } from "expo-router";
@@ -31,8 +32,7 @@ const ProductDetails = (props: Props) => {
   const [userId, setUserId] = React.useState<string | null>(null);
   const [cartId, setCartId] = React.useState<string | null>(null);
   const [product, setProduct] = useState<ProductType>();
-  const [productvariants, setProductVariants] =
-    useState<ProductVariantType[]>();
+  const [productvariants, setProductVariants] = useState<ProductVariantType[]>();
   const [color, setColor] = useState<ColorType[]>([]);
   const [size, setSize] = useState<SizeType[]>([]);
   const [selectedColor, setSelectedColor] = useState<ColorType>();
@@ -42,16 +42,23 @@ const ProductDetails = (props: Props) => {
   const [availableColorIds, setAvailableColorIds] = useState<number[]>([]);
   const [availableSizeIds, setAvailableSizeIds] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
 
   useEffect(() => {
     const loadAuthData = async () => {
-      const token = await AsyncStorage.getItem("access_token");
-      const user = await AsyncStorage.getItem("userId");
-      const cart = await AsyncStorage.getItem("cartId");
-      if (token && user) {
-        setJwtToken(token);
-        setUserId(user);
-        setCartId(cart);
+      try {
+        const token = await AsyncStorage.getItem("access_token");
+        const user = await AsyncStorage.getItem("userId");
+        const cart = await AsyncStorage.getItem("cartId");
+        if (token && user) {
+          setJwtToken(token);
+          setUserId(user);
+          setCartId(cart);
+        }
+      } catch (error) {
+        console.error("Error loading auth data:", error);
+        Alert.alert("Error", "Failed to load authentication data. Please try logging in again.");
       }
     };
     loadAuthData();
@@ -63,13 +70,59 @@ const ProductDetails = (props: Props) => {
 
   const getProductDetails = async () => {
     try {
+      setIsLoading(true);
       const URL = `http://${Personal_IP.data}:3000/product/get-product/${id}`;
       const response = await axios.get(URL);
-      setProduct(response.data.data);
-      setError(null);
-    } catch (err) {
+
+      if (response.data && response.data.data) {
+        setProduct(response.data.data);
+        setError(null);
+      } else {
+        throw new Error("Product data not found");
+      }
+    } catch (err: any) {
+      console.error("Error fetching product details:", err);
       setError("Failed to load product details.");
-      console.error(err);
+
+      // Show user-friendly alert based on error type
+      if (err.response?.status === 404) {
+        Alert.alert(
+          "Product Not Found",
+          "The product you're looking for doesn't exist or has been removed.",
+          [
+            { text: "Go Back", onPress: () => router.back() }
+          ]
+        );
+      } else if (err.response?.status >= 500) {
+        Alert.alert(
+          "Server Error",
+          "Our servers are experiencing issues. Please try again later.",
+          [
+            { text: "Retry", onPress: () => getProductDetails() },
+            { text: "Go Back", onPress: () => router.back() }
+          ]
+        );
+      } else if (err.code === 'NETWORK_ERROR' || err.message.includes('Network Error')) {
+        Alert.alert(
+          "Connection Error",
+          "Please check your internet connection and try again.",
+          [
+            { text: "Retry", onPress: () => getProductDetails() },
+            { text: "Go Back", onPress: () => router.back() }
+          ]
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          "Failed to load product details. Please try again.",
+          [
+            { text: "Retry", onPress: () => getProductDetails() },
+            { text: "Go Back", onPress: () => router.back() }
+          ]
+        );
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -87,6 +140,11 @@ const ProductDetails = (props: Props) => {
       );
 
       if (!response.ok) {
+        if (response.status === 404) {
+          // No variants found - this might be normal for some products
+          setProductVariants([]);
+          return;
+        }
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
@@ -125,17 +183,29 @@ const ProductDetails = (props: Props) => {
         }
       } else {
         console.error("Expected array, got:", typeof data, data);
+        Alert.alert("Error", "Invalid product variant data received.");
       }
 
       return data;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching product variant:", error);
+
+      // Only show alert for significant errors, not for missing variants
+      if (error.message.includes('HTTP error') && !error.message.includes('404')) {
+        Alert.alert(
+          "Error",
+          "Failed to load product options. Some features may not be available.",
+          [{ text: "OK" }]
+        );
+      }
     }
   };
 
   useEffect(() => {
-    fetchProductVariant();
-  }, []);
+    if (jwtToken) {
+      fetchProductVariant();
+    }
+  }, [jwtToken]);
 
   const handleColorSelect = (color: ColorType) => {
     if (selectedColor?.id === color.id) {
@@ -186,6 +256,37 @@ const ProductDetails = (props: Props) => {
   }, [selectedColor, selectedSize, productvariants, color, size]);
 
   const handleAddToCart = async () => {
+    // Validation checks with user-friendly alerts
+    if (!jwtToken || !userId) {
+      Alert.alert(
+        "Login Required",
+        "Please log in to add items to your cart.",
+        [
+          { text: "Cancel", style: "cancel" },
+          { text: "Login", onPress: () => router.push("/login") }
+        ]
+      );
+      return;
+    }
+
+    if (!product) {
+      Alert.alert("Error", "Product information is not available.");
+      return;
+    }
+
+    // Check if color/size selection is required
+    if (color.length > 0 && !selectedColor) {
+      Alert.alert("Selection Required", "Please select a color before adding to cart.");
+      return;
+    }
+
+    if (size.length > 0 && !selectedSize) {
+      Alert.alert("Selection Required", "Please select a size before adding to cart.");
+      return;
+    }
+
+    setIsAddingToCart(true);
+
     try {
       const data = {
         colorId: selectedColor?.id,
@@ -208,25 +309,112 @@ const ProductDetails = (props: Props) => {
           body: JSON.stringify(data),
         }
       );
+
       if (response.ok) {
-        router.push("/(tabs)/");
-        console.log("Item added to the cart in the database");
-        Alert.alert("Sản phẩm đã được thêm vào giỏ hàng!");
+        Alert.alert(
+          "Success!",
+          "Product has been added to your cart.",
+          [
+            { text: "Continue Shopping", onPress: () => router.push("/(tabs)/") },
+            { text: "View Cart", onPress: () => router.push("/cart") }
+          ]
+        );
       } else {
-        const error = await response.text();
-        if (error) {
-          Alert.alert("Thêm vào giỏ hàng thất bại!", error);
+        const errorText = await response.text();
+        let errorMessage = "Failed to add item to cart.";
+
+        // Parse specific error messages
+        try {
+          const errorData = JSON.parse(errorText);
+          if (errorData.message) {
+            errorMessage = errorData.message;
+          }
+        } catch (parseError) {
+          // Use the raw error text if it's not JSON
+          if (errorText && errorText.length < 200) {
+            errorMessage = errorText;
+          }
         }
-        console.error("Failed to add item to the cart in the database");
+
+        // Handle specific error cases
+        if (response.status === 400) {
+          Alert.alert("Invalid Request", errorMessage);
+        } else if (response.status === 401) {
+          Alert.alert(
+            "Session Expired",
+            "Please log in again to continue.",
+            [{ text: "Login", onPress: () => router.push("/login") }]
+          );
+        } else if (response.status === 409) {
+          Alert.alert("Already in Cart", "This item is already in your cart.");
+        } else if (response.status >= 500) {
+          Alert.alert(
+            "Server Error",
+            "Our servers are experiencing issues. Please try again later."
+          );
+        } else {
+          Alert.alert("Error", errorMessage);
+        }
       }
-    } catch (error) {
-      Alert.alert("Vui lòng đăng nhập!");
-      console.error("Error adding item to the cart:", error);
+    } catch (error: any) {
+      console.error("Error adding item to cart:", error);
+
+      if (error.name === 'NetworkError' || error.message.includes('Network')) {
+        Alert.alert(
+          "Connection Error",
+          "Please check your internet connection and try again."
+        );
+      } else {
+        Alert.alert(
+          "Error",
+          "Something went wrong while adding the item to cart. Please try again."
+        );
+      }
+    } finally {
+      setIsAddingToCart(false);
     }
   };
 
   const headerHeight = useHeaderHeight();
   const router = useRouter();
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <>
+        <Stack.Screen
+          options={{ title: "Product Details", headerTransparent: true }}
+        />
+        <View style={[styles.container, { marginTop: headerHeight, justifyContent: 'center', alignItems: 'center' }]}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={{ marginTop: 16, color: Colors.gray }}>Loading product...</Text>
+        </View>
+      </>
+    );
+  }
+
+  // Error state
+  if (error && !product) {
+    return (
+      <>
+        <Stack.Screen
+          options={{ title: "Product Details", headerTransparent: true }}
+        />
+        <View style={[styles.container, { marginTop: headerHeight, justifyContent: 'center', alignItems: 'center' }]}>
+          <Ionicons name="alert-circle-outline" size={64} color={Colors.gray} />
+          <Text style={{ marginTop: 16, color: Colors.gray, textAlign: 'center' }}>
+            {error}
+          </Text>
+          <TouchableOpacity
+            style={[styles.button, { marginTop: 20, backgroundColor: Colors.primary }]}
+            onPress={() => getProductDetails()}
+          >
+            <Text style={[styles.buttonText, { color: Colors.white }]}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </>
+    );
+  }
 
   return (
     <>
@@ -348,14 +536,22 @@ const ProductDetails = (props: Props) => {
               backgroundColor: Colors.white,
               borderColor: Colors.primary,
               borderWidth: 1,
+              opacity: isAddingToCart ? 0.6 : 1,
             },
           ]}
           onPress={handleAddToCart}
+          disabled={isAddingToCart}
         >
-          <Ionicons name="cart-outline" size={20} color={Colors.primary} />
-          <Text style={[styles.buttonText, { color: Colors.primary }]}>
-            Add to Cart
-          </Text>
+          {isAddingToCart ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : (
+            <>
+              <Ionicons name="cart-outline" size={20} color={Colors.primary} />
+              <Text style={[styles.buttonText, { color: Colors.primary }]}>
+                Add to Cart
+              </Text>
+            </>
+          )}
         </TouchableOpacity>
       </View>
     </>

@@ -44,7 +44,7 @@ export class CartItemService {
 
     if (productVariant.quantity < quantity) {
       throw new BadRequestException(
-        'Số lượng yêu cầu vượt quá số lượng tồn kho.',
+        'The quantity requested exceeds the quantity in stock.',
       );
     }
 
@@ -180,9 +180,9 @@ export class CartItemService {
       relations: ['productVariant'],
     });
 
-    if (!cartItems || cartItems.length === 0) {
-      throw new NotFoundException(`No CartItems found for CartID ${cartID}`);
-    }
+    //if (!cartItems || cartItems.length === 0) {
+    //  throw new NotFoundException(`No CartItems found for CartID ${cartID}`);
+    //}
 
     return cartItems;
   }
