@@ -1,7 +1,7 @@
 
 ![UIT](https://img.shields.io/badge/from-UIT%20VNUHCM-blue?style=for-the-badge&link=https%3A%2F%2Fwww.uit.edu.vn%2F)
 
-SE400
+SE405 - Chuyên đề Mobile 
 
 **Sinh viên thực hiện**:
 
