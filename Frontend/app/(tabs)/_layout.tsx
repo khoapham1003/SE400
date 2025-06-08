@@ -32,9 +32,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="orderhistory"  
+        name="orderhistory"
         options={{
-          title: "Order History",
+          title: "Your Order",
           // tabBarIcon: ({ color }) => (
           //   <Ionicons name="notifications-outline" size={22} color={color} />
           // ),

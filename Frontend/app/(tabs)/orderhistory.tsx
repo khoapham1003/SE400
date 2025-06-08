@@ -480,7 +480,7 @@ const OrderHistoryScreen = () => {
         options={{
           headerShown: true,
           headerTransparent: true,
-          title: "Order History",
+          title: "Your Order",
         }}
       />
       <View style={[styles.container, { marginTop: headerHeight }]}>
