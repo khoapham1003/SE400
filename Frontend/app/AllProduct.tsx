@@ -78,7 +78,8 @@ const AllProduct = () => {
   const getAllProducts = async () => {
     setIsLoading(true);
     try {
-      const URL = "http://" + Personal_IP.data + ":3000/product/get-all-products";
+      const URL =
+        "http://" + Personal_IP.data + ":3000/product/get-all-products";
       console.log("🔍 Fetching all products from URL:", URL);
 
       const response = await axios.get(URL);
@@ -96,7 +97,8 @@ const AllProduct = () => {
   const getProductsByCategory = async (categoryId: number) => {
     setIsLoading(true);
     try {
-      const URL = "http://" + Personal_IP.data + ":3000/product/category/" + categoryId;
+      const URL =
+        "http://" + Personal_IP.data + ":3000/product/category/" + categoryId;
       console.log("🔍 Fetching products by category from URL:", URL);
       console.log("🏷️ Category ID:", categoryId);
 
@@ -106,11 +108,13 @@ const AllProduct = () => {
       console.log("🛍️ Products data:", response.data.data);
       console.log("📈 Products count:", response.data.data?.length || 0);
 
-      const data = Array.isArray(response.data) ? response.data : response.data.data || [];
+      const data = Array.isArray(response.data)
+        ? response.data
+        : response.data.data || [];
       const productsData = data.filter((item: any) => item !== null);
       setProducts(productsData);
       console.log("✅ Category products set to state:", productsData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error fetching products by category:", error);
       console.error("❌ Error details:", error.response?.data || error.message);
       setProducts([]); // Set empty array on error
@@ -122,7 +126,8 @@ const AllProduct = () => {
 
   const getCategories = async () => {
     try {
-      const URL = "http://" + Personal_IP.data + ":3000/category/get-all-categories";
+      const URL =
+        "http://" + Personal_IP.data + ":3000/category/get-all-categories";
 
       const response = await axios.get(URL);
       const categoriesData = response.data.data || [];
@@ -145,7 +150,10 @@ const AllProduct = () => {
   };
 
   // Sort products function
-  const sortProducts = (products: ProductType[], sortOption: SortOption): ProductType[] => {
+  const sortProducts = (
+    products: ProductType[],
+    sortOption: SortOption
+  ): ProductType[] => {
     const sortedProducts = [...products];
 
     switch (sortOption) {
@@ -163,15 +171,15 @@ const AllProduct = () => {
 
       case SortOption.NEWEST:
         return sortedProducts.sort((a, b) => {
-          const dateA = new Date(a.createdAt || a.created_at || 0);
-          const dateB = new Date(b.createdAt || b.created_at || 0);
+          const dateA = new Date(a.created_at || 0);
+          const dateB = new Date(b.created_at || 0);
           return dateB.getTime() - dateA.getTime();
         });
 
       case SortOption.OLDEST:
         return sortedProducts.sort((a, b) => {
-          const dateA = new Date(a.createdAt || a.created_at || 0);
-          const dateB = new Date(b.createdAt || b.created_at || 0);
+          const dateA = new Date(a.created_at || 0);
+          const dateB = new Date(b.created_at || 0);
           return dateA.getTime() - dateB.getTime();
         });
 
@@ -184,7 +192,7 @@ const AllProduct = () => {
   // Filter and sort products
   const processedProducts = (() => {
     // First filter by search text
-    const filtered = (products || []).filter(product => {
+    const filtered = (products || []).filter((product) => {
       if (searchText.trim() === "") return true;
       return product.title.toLowerCase().includes(searchText.toLowerCase());
     });
@@ -236,8 +244,9 @@ const AllProduct = () => {
             <TouchableOpacity
               style={[
                 styles.categoryButton,
-                (selectedCategory === item.id || (selectedCategory === null && item.id === 0)) &&
-                styles.categoryButtonSelected,
+                (selectedCategory === item.id ||
+                  (selectedCategory === null && item.id === 0)) &&
+                  styles.categoryButtonSelected,
               ]}
               onPress={() => {
                 if (item.id === 0) {
@@ -250,8 +259,9 @@ const AllProduct = () => {
               <Text
                 style={[
                   styles.categoryText,
-                  (selectedCategory === item.id || (selectedCategory === null && item.id === 0)) &&
-                  styles.categoryTextSelected,
+                  (selectedCategory === item.id ||
+                    (selectedCategory === null && item.id === 0)) &&
+                    styles.categoryTextSelected,
                 ]}
               >
                 {item.title}
@@ -265,10 +275,13 @@ const AllProduct = () => {
       <View style={styles.controlsContainer}>
         <View style={styles.resultsContainer}>
           <Text style={styles.resultsText}>
-            {processedProducts.length} product{processedProducts.length !== 1 ? 's' : ''} found
+            {processedProducts.length} product
+            {processedProducts.length !== 1 ? "s" : ""} found
             {selectedCategory && (
               <Text style={styles.categoryInfo}>
-                {' '}in {categories.find(cat => cat.id === selectedCategory)?.title}
+                {" "}
+                in{" "}
+                {categories.find((cat) => cat.id === selectedCategory)?.title}
               </Text>
             )}
           </Text>
@@ -279,7 +292,7 @@ const AllProduct = () => {
           onPress={() => setShowSortModal(true)}
         >
           <Text style={styles.sortButtonText}>
-            Sort: {sortOptions.find(opt => opt.key === sortOption)?.label}
+            Sort: {sortOptions.find((opt) => opt.key === sortOption)?.label}
           </Text>
           <Text style={styles.sortIcon}>⇅</Text>
         </TouchableOpacity>
@@ -293,8 +306,7 @@ const AllProduct = () => {
           <Text style={styles.emptySubText}>
             {searchText.trim() !== ""
               ? "Try adjusting your search term"
-              : "No products available in this category"
-            }
+              : "No products available in this category"}
           </Text>
         </View>
       )}
@@ -325,14 +337,16 @@ const AllProduct = () => {
                 <TouchableOpacity
                   style={[
                     styles.sortOptionButton,
-                    sortOption === item.key && styles.sortOptionButtonSelected
+                    sortOption === item.key && styles.sortOptionButtonSelected,
                   ]}
                   onPress={() => handleSortSelection(item.key)}
                 >
-                  <Text style={[
-                    styles.sortOptionText,
-                    sortOption === item.key && styles.sortOptionTextSelected
-                  ]}>
+                  <Text
+                    style={[
+                      styles.sortOptionText,
+                      sortOption === item.key && styles.sortOptionTextSelected,
+                    ]}
+                  >
                     {item.label}
                   </Text>
                   {sortOption === item.key && (
@@ -387,8 +401,8 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 10,
@@ -396,9 +410,9 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 15,
   },
   resultsContainer: {
@@ -415,26 +429,26 @@ const styles = StyleSheet.create({
     color: "#666",
   },
   sortButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
   sortButtonText: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
     marginRight: 6,
   },
   sortIcon: {
     fontSize: 14,
-    color: '#666',
+    color: "#666",
   },
   emptyContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginTop: 50,
     paddingHorizontal: 20,
   },
@@ -447,64 +461,64 @@ const styles = StyleSheet.create({
   emptySubText: {
     fontSize: 14,
     color: "#999",
-    textAlign: 'center',
+    textAlign: "center",
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 30,
-    maxHeight: '50%',
+    maxHeight: "50%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: "#eee",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#333',
+    fontWeight: "600",
+    color: "#333",
   },
   closeButton: {
     padding: 4,
   },
   closeButtonText: {
     fontSize: 18,
-    color: '#666',
+    color: "#666",
   },
   sortOptionButton: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingVertical: 16,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   sortOptionButtonSelected: {
-    backgroundColor: '#f8f9ff',
+    backgroundColor: "#f8f9ff",
   },
   sortOptionText: {
     fontSize: 16,
-    color: '#333',
+    color: "#333",
   },
   sortOptionTextSelected: {
     color: Colors.primary,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   checkMark: {
     fontSize: 16,
     color: Colors.primary,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
 });
