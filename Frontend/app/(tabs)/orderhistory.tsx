@@ -18,6 +18,7 @@ import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { formatDate, formatPrice } from "@/utils/format";
 
 type AddressType = {
   line1: string;
@@ -41,12 +42,7 @@ type OrderType = {
 };
 
 type SortOption = "newest" | "oldest" | "price-high" | "price-low";
-type FilterOption =
-  | "all"
-  | "completed"
-  | "pending"
-  | "processing"
-  | "cancelled";
+type FilterOption = "all" | "completed" | "pending";
 
 const OrderHistoryScreen = () => {
   const [orders, setOrders] = useState<OrderType[]>([]);
@@ -169,24 +165,6 @@ const OrderHistoryScreen = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return price.toLocaleString("vi-VN", {
-      style: "currency",
-      currency: "VND",
-    });
-  };
-
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
       case "newest":
@@ -288,15 +266,7 @@ const OrderHistoryScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {(
-            [
-              "all",
-              "completed",
-              "pending",
-              "processing",
-              "cancelled",
-            ] as FilterOption[]
-          ).map((option) => (
+          {(["all", "completed", "pending"] as FilterOption[]).map((option) => (
             <TouchableOpacity
               key={option}
               style={[

@@ -2,6 +2,7 @@ import InputField from "@/components/InputField";
 import { Colors } from "@/constants/Colors";
 import { Personal_IP } from "@/constants/ip";
 import { CartItemType, InProcessItemType } from "@/types/type";
+import { formatPrice } from "@/utils/format";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { router } from "expo-router";
@@ -16,27 +17,6 @@ import {
   Image,
 } from "react-native";
 import FeatherIcon from "react-native-vector-icons/Feather";
-
-//TEMP DATA
-const paymentMethods = [
-  {
-    id: "paypal",
-    label: "PayPal",
-    img: "https://assets.withfra.me/credit_cards/paypal.png",
-  },
-  {
-    id: "amex-89001",
-    label: "Amex ••••89001",
-    img: "https://assets.withfra.me/credit_cards/amex.png",
-  },
-  {
-    id: "visa-3021",
-    label: "Visa ••••3021",
-    img: "https://assets.withfra.me/credit_cards/visa.png",
-  },
-];
-
-//TEMP DATA==END
 
 const ProductList = ({ products }: { products: InProcessItemType[] }) => {
   return (
@@ -85,27 +65,20 @@ const ProductList = ({ products }: { products: InProcessItemType[] }) => {
           </View>
           <View>
             <Text style={{ fontSize: 16, fontWeight: "600" }}>
-              {Math.abs(price * (1 - discount / 100) * quantity).toLocaleString(
-                "vi-VN",
-                {
-                  style: "currency",
-                  currency: "VND",
-                }
-              )}
+              {formatPrice(price * (1 - discount / 100) * quantity)}
             </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: "500",
-                color: "#555",
-                textDecorationLine: "line-through",
-              }}
-            >
-              {Math.abs(price * quantity).toLocaleString("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              })}
-            </Text>
+            {!(discount === 0) && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: "500",
+                  color: "#555",
+                  textDecorationLine: "line-through",
+                }}
+              >
+                {formatPrice(price * quantity)}
+              </Text>
+            )}
           </View>
         </View>
       ))}
@@ -114,14 +87,12 @@ const ProductList = ({ products }: { products: InProcessItemType[] }) => {
 };
 
 const Checkout = () => {
-  const [form, setForm] = React.useState({
-    paymentMethod: paymentMethods[0].id,
-  });
-
   const [jwtToken, setJwtToken] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
   const [orderId, setOrderId] = React.useState<string | null>(null);
   const [cartId, setCartId] = React.useState<string | null>(null);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const [totalAmount, setTotalAmount] = React.useState(0);
   const [totalDiscount, setTotalDiscount] = React.useState(0);
@@ -130,18 +101,17 @@ const Checkout = () => {
   const deliveryFee = 30000;
 
   const [items, setItems] = React.useState<InProcessItemType[]>([]);
-  const [order, setOrder] = useState({
-    lastName: "Lương Lê",
-    middleName: "Duy",
-    firstName: "Tiến",
-    phoneNumber: "0123456789",
-    email: "tien1214@gmail.com",
-    line1: "1015",
-    line2: "",
-    city: "TP Ho Chi Minh",
-    province: "TP Ho Chi Minh",
-    country: "Viet Nam",
-  });
+
+  const [lastName, setLastName] = useState("Lương Lê");
+  const [middleName, setMiddleName] = useState("Duy");
+  const [firstName, setFirstName] = useState("Tiến");
+  const [phoneNumber, setPhoneNumber] = useState("0123456789");
+  const [email, setEmail] = useState("tien1234@gmail.com");
+  const [line1, setLine1] = useState("1015 Thánh Gióng");
+  const [line2, setLine2] = useState("");
+  const [city, setCity] = useState("TP Thủ Đức");
+  const [province, setProvince] = useState("TP Hồ Chi Minh");
+  const [country, setCountry] = useState("Việt Nam");
 
   const loadAuthData = async () => {
     const token = await AsyncStorage.getItem("access_token");
@@ -200,17 +170,18 @@ const Checkout = () => {
 
   const handlePlaceOrder = async () => {
     try {
+      setIsLoading(true);
       const data = {
-        lastName: order.lastName,
-        middleName: order.middleName,
-        firstName: order.firstName,
-        phoneNumber: order.phoneNumber,
-        email: order.email,
-        line1: order.line1,
-        line2: order.line2,
-        city: order.city,
-        province: order.province,
-        country: order.country,
+        lastName: lastName,
+        middleName: middleName,
+        firstName: firstName,
+        phoneNumber: phoneNumber,
+        email: email,
+        line1: line1,
+        line2: line2,
+        city: city,
+        province: province,
+        country: country,
 
         status: "PENDING",
         subTotal: totalAmount,
@@ -246,6 +217,7 @@ const Checkout = () => {
     } catch (error) {
       console.error("Error occurs while place order:");
     }
+    setIsLoading(false);
   };
 
   const removeCartItem = async (cartItemId: number) => {
@@ -284,7 +256,9 @@ const Checkout = () => {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal</Text>
 
-              <Text style={styles.summaryPrice}>{totalAmount}</Text>
+              <Text style={styles.summaryPrice}>
+                {formatPrice(totalAmount)}
+              </Text>
             </View>
 
             <View style={styles.summaryRow}>
@@ -294,17 +268,9 @@ const Checkout = () => {
                 <FeatherIcon color="#454545" name="help-circle" size={17} />
               </TouchableOpacity>
 
-              <Text style={styles.summaryPrice}>{deliveryFee}</Text>
-            </View>
-
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tip</Text>
-
-              <TouchableOpacity>
-                <FeatherIcon color="#454545" name="help-circle" size={17} />
-              </TouchableOpacity>
-
-              <Text style={styles.summaryPrice}>$2.00</Text>
+              <Text style={styles.summaryPrice}>
+                {formatPrice(deliveryFee)}
+              </Text>
             </View>
 
             <View style={styles.summaryRow}>
@@ -314,16 +280,22 @@ const Checkout = () => {
                 <FeatherIcon color="#454545" name="help-circle" size={17} />
               </TouchableOpacity>
 
-              <Text style={styles.summaryPrice}>{totalDiscount}</Text>
+              <Text style={styles.summaryPrice}>
+                - {formatPrice(totalDiscount)}
+              </Text>
             </View>
 
             <View style={styles.summaryTotal}>
               <Text style={styles.summaryLabel}>Total</Text>
 
-              <Text style={styles.summaryPriceOld}>{totalAmount}</Text>
+              {!(totalDiscount === 0) && (
+                <Text style={styles.summaryPriceOld}>
+                  {formatPrice(totalAmount)}
+                </Text>
+              )}
 
               <Text style={styles.summaryPricePrimary}>
-                {totalPriceWithDiscount}
+                {formatPrice(totalPriceWithDiscount)}
               </Text>
             </View>
 
@@ -341,49 +313,79 @@ const Checkout = () => {
             <View style={styles.sectionBody}>
               <View style={styles.shipContainer}>
                 <InputField
-                  placeholder="Receiver Name"
+                  placeholder="Last Name"
                   placeholderTextColor={Colors.gray}
                   autoCapitalize="none"
                   style={styles.shipInput}
-                  // value={username}
-                  // onChangeText={setUsername}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  keyboardType="default"
+                />
+                <InputField
+                  placeholder="Middle Name"
+                  placeholderTextColor={Colors.gray}
+                  autoCapitalize="none"
+                  style={styles.shipInput}
+                  value={middleName}
+                  onChangeText={setMiddleName}
+                />
+                <InputField
+                  placeholder="First Name"
+                  placeholderTextColor={Colors.gray}
+                  autoCapitalize="none"
+                  style={styles.shipInput}
+                  value={firstName}
+                  onChangeText={setFirstName}
                 />
                 <InputField
                   placeholder="Phone Number"
                   placeholderTextColor={Colors.gray}
-                  secureTextEntry={true}
                   style={styles.shipInput}
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                />
+                <InputField
+                  placeholder="Phone Number"
+                  placeholderTextColor={Colors.gray}
+                  style={styles.shipInput}
+                  value={email}
+                  onChangeText={setEmail}
                 />
                 <InputField
                   placeholder="Country"
                   placeholderTextColor={Colors.gray}
-                  secureTextEntry={true}
                   style={styles.shipInput}
+                  value={country}
+                  onChangeText={setCountry}
                 />
                 <InputField
                   placeholder="Province"
                   placeholderTextColor={Colors.gray}
-                  secureTextEntry={true}
                   style={styles.shipInput}
+                  value={province}
+                  onChangeText={setProvince}
                 />
                 <InputField
                   placeholder="City"
                   placeholderTextColor={Colors.gray}
-                  secureTextEntry={true}
                   style={styles.shipInput}
+                  value={city}
+                  onChangeText={setCity}
                 />
                 <InputField
                   placeholder="Address"
                   placeholderTextColor={Colors.gray}
-                  secureTextEntry={true}
                   style={styles.shipInput}
+                  value={line1}
+                  onChangeText={setLine1}
+                  numberOfLines={2}
+                  textAlignVertical="top"
                 />
               </View>
             </View>
           </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Payment methods</Text>
-
             <View style={styles.sectionBody}>
               <View style={styles.radioWrapper}>
                 <TouchableOpacity
@@ -412,7 +414,9 @@ const Checkout = () => {
       </SafeAreaView>
 
       <View style={styles.overlay}>
-        <Text style={styles.totalAmount}>${totalPriceWithDiscount}</Text>
+        <Text style={styles.totalAmount}>
+          {formatPrice(totalPriceWithDiscount)}
+        </Text>
         <TouchableOpacity
           onPress={() => {
             handlePlaceOrder();
@@ -420,7 +424,9 @@ const Checkout = () => {
           style={{ flex: 1, paddingHorizontal: 24 }}
         >
           <View style={styles.btn}>
-            <Text style={styles.btnText}>Place Order</Text>
+            <Text style={styles.btnText}>
+              {isLoading ? "Processing..." : "Place Order"}
+            </Text>
           </View>
         </TouchableOpacity>
       </View>

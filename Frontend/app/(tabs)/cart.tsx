@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Checkbox } from "react-native-paper";
 import InputField from "@/components/InputField";
+import { formatPrice } from "@/utils/format";
 
 type Props = {
   thisUser: UserType;
@@ -307,20 +308,16 @@ const CartScreen = ({ thisUser }: Props) => {
         <View style={styles.priceInfoWrapper}>
           <Text style={styles.totalText}>
             Total:
-            {Number((totalAmount || 0) - (totalDiscount || 0)).toLocaleString(
-              "vi-VN",
-              {
-                style: "currency",
-                currency: "VND",
-              }
-            )}
+            {formatPrice((totalAmount || 0) - (totalDiscount || 0))}
           </Text>
         </View>
         <TouchableOpacity
           style={styles.checkoutBtn}
           onPress={() => handleCheckout()}
         >
-          <Text style={styles.checkoutBtnText}>Checkout</Text>
+          <Text style={styles.checkoutBtnText}>
+            {isLoading ? "Processing..." : "Checkout"}
+          </Text>
         </TouchableOpacity>
       </View>
     </>
@@ -391,20 +388,11 @@ const CartItem = ({
         </Text>
         <View style={styles.itemPriceWrapper}>
           <Text style={styles.itemPrice}>
-            {Number((priceWithDiscount || 0) * item.quantity).toLocaleString(
-              "vi-VN",
-              {
-                style: "currency",
-                currency: "VND",
-              }
-            )}
+            {formatPrice((priceWithDiscount || 0) * item.quantity)}
           </Text>
           {!(discount === 0) && (
             <Text style={styles.itemOriginalPrice}>
-              {Number((price || 0) * item.quantity).toLocaleString("vi-VN", {
-                style: "currency",
-                currency: "VND",
-              })}
+              {formatPrice((price || 0) * item.quantity)}
             </Text>
           )}
         </View>
