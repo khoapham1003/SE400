@@ -23,7 +23,7 @@ const SignInScreen = (props: Props) => {
 
   const handleSignIn = async () => {
     if (!username || !password) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ tài khoản và mật khẩu.");
+      Alert.alert("Error", "Please enter username and password.");
       return;
     }
 
@@ -58,17 +58,17 @@ const SignInScreen = (props: Props) => {
         await AsyncStorage.setItem("userId", UserId);
         await AsyncStorage.setItem("role", role);
 
-        Alert.alert("Đăng nhập thành công!");
+        Alert.alert("Login successful!");
         router.dismissAll();
         router.push("/(tabs)");
       } else {
-        Alert.alert("Lỗi", "Không nhận được token từ máy chủ.");
+        Alert.alert("Error", "Token not received from server.");
       }
     } catch (error: any) {
       console.error("Login failed:", error);
       const message =
-        error.response?.data?.message || "Sai tài khoản hoặc mật khẩu";
-      Alert.alert("Đăng nhập thất bại", message);
+        error.response?.data?.message || "Wrong username or password";
+      Alert.alert("Login failed", message);
     } finally {
       setIsLoading(false);
     }
@@ -100,7 +100,7 @@ const SignInScreen = (props: Props) => {
           disabled={isLoading}
         >
           <Text style={styles.btnTxt}>
-            {isLoading ? "Đang đăng nhập..." : "Login"}
+            {isLoading ? "Logging in..." : "Login"}
           </Text>
         </TouchableOpacity>
 
