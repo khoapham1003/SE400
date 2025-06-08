@@ -138,11 +138,3 @@ export interface OrderItemType {
 
   productVariant?: ProductVariantType | null;
 }
-
-export interface NotificationType {
-  id: number;
-  title: string;
-  message: string;
-  timestamp: string;
-  grandTotal: number;
-}

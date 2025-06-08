@@ -57,24 +57,29 @@ const WelcomeScreen = (props: Props) => {
                   <Link href={"/signup"} asChild>
                     <TouchableOpacity style={styles.button}>
                       <Ionicons
-                        name="mail-outline"
+                        name="person-add-outline"
                         size={20}
                         color={Colors.black}
                       />
-                      <Text style={styles.btnTxt}>Continue with Email</Text>
+                      <Text style={styles.btnTxt}>Create a new account</Text>
                     </TouchableOpacity>
                   </Link>
                 </Animated.View>
               </View>
 
-              <Text style={styles.loginTxt}>
-                Already have an account?{" "}
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
+                <Text style={styles.loginTxt}>Already have an account?</Text>
                 <Link href={"/signin"} asChild>
                   <TouchableOpacity>
-                    <Text style={styles.loginTxtSpan}>Sign In</Text>
+                    <Text style={styles.loginTxtSpan}> Sign In</Text>
                   </TouchableOpacity>
                 </Link>
-              </Text>
+              </View>
             </View>
           </LinearGradient>
         </View>
@@ -139,12 +144,12 @@ const styles = StyleSheet.create({
     color: Colors.black,
   },
   loginTxt: {
-    marginTop: 30,
+    marginTop: 15,
     color: Colors.black,
     fontSize: 14,
-    lineHeight: 24,
   },
   loginTxtSpan: {
+    marginTop: 15,
     color: Colors.primary,
     fontWeight: "600",
   },

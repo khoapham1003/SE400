@@ -17,8 +17,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 type Props = {};
 
 const SignInScreen = (props: Props) => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("admin@admin.com");
+  const [password, setPassword] = useState("Admin@1234");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSignIn = async () => {
@@ -54,7 +54,7 @@ const SignInScreen = (props: Props) => {
 
         // Lưu vào AsyncStorage
         await AsyncStorage.setItem("email", email);
-        await AsyncStorage.setItem("CartId", CartId);
+        await AsyncStorage.setItem("cartId", CartId);
         await AsyncStorage.setItem("userId", UserId);
         await AsyncStorage.setItem("role", role);
 
@@ -103,15 +103,19 @@ const SignInScreen = (props: Props) => {
             {isLoading ? "Logging in..." : "Login"}
           </Text>
         </TouchableOpacity>
-
-        <Text style={styles.loginTxt}>
-          You don't have an account?{" "}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.loginTxt}>You don't have an account?</Text>
           <Link href="/signup" asChild>
             <TouchableOpacity>
               <Text style={styles.loginTxtSpan}>Sign Up</Text>
             </TouchableOpacity>
           </Link>
-        </Text>
+        </View>
       </View>
     </>
   );
@@ -149,12 +153,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   loginTxt: {
-    marginTop: 30,
+    marginTop: 15,
     color: Colors.black,
     fontSize: 14,
-    lineHeight: 24,
   },
   loginTxtSpan: {
+    marginTop: 15,
     color: Colors.primary,
     fontWeight: "600",
   },

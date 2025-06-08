@@ -14,15 +14,15 @@ import { useRouter } from "expo-router";
 type Props = {
   products: ProductType[];
   flatlist?: boolean;
-  categoryId?: number | null; // Optional prop to pass category context
-  hideHeader?: boolean; // Optional prop to hide the "For You" header section
+  categoryId?: number | null;
+  hideHeader?: boolean;
 };
 
 const ProductList = ({
   products,
   flatlist = true,
   categoryId = null,
-  hideHeader = false
+  hideHeader = false,
 }: Props) => {
   const router = useRouter();
 
@@ -32,7 +32,7 @@ const ProductList = ({
       router.push(`/AllProduct?categoryId=${categoryId}`);
     } else {
       // Navigate to AllProduct showing all products
-      router.push('/AllProduct');
+      router.push("/AllProduct");
     }
   };
 
@@ -96,14 +96,14 @@ const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
   itemsWrapper: {
-    width: '100%',
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'stretch'
+    width: "100%",
+    flexDirection: "row",
+    flexWrap: "wrap",
+    alignItems: "stretch",
   },
   productWrapper: {
-    width: '50%',
+    width: "50%",
     paddingLeft: 5,
-    marginBottom: 20
-  }
+    marginBottom: 20,
+  },
 });

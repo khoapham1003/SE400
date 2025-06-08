@@ -39,7 +39,8 @@ const SignUpScreen = () => {
       Alert.alert("Success", "Registration successful!");
       router.push("/signin"); // hoặc router.replace nếu không muốn quay lại màn đăng ký
     } catch (error: any) {
-      const errorMessage = error?.response?.data?.message || "Registration failed";
+      const errorMessage =
+        error?.response?.data?.message || "Registration failed";
       Alert.alert("Error", errorMessage);
       console.error("Registration error:", errorMessage);
     }
@@ -94,15 +95,19 @@ const SignUpScreen = () => {
         <TouchableOpacity style={styles.btn} onPress={handleSignUp}>
           <Text style={styles.btnTxt}>Register</Text>
         </TouchableOpacity>
-
-        <Text style={styles.loginTxt}>
-          You already have an account?{" "}
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <Text style={styles.loginTxt}>You already have an account? </Text>
           <Link href={"/signin"} asChild>
             <TouchableOpacity>
               <Text style={styles.loginTxtSpan}>Log in</Text>
             </TouchableOpacity>
           </Link>
-        </Text>
+        </View>
       </View>
     </>
   );
@@ -140,12 +145,12 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   loginTxt: {
-    marginTop: 20,
+    marginTop: 15,
     color: Colors.black,
     fontSize: 14,
-    lineHeight: 24,
   },
   loginTxtSpan: {
+    marginTop: 15,
     color: Colors.primary,
     fontWeight: "600",
   },
