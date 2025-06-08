@@ -11,7 +11,7 @@ const Header = (props: Props) => {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      <Text style={styles.logo}>Header</Text>
+      <Text style={styles.logo}>WeVibe</Text>
       <Link href={"/explore"} asChild>
         <TouchableOpacity style={styles.searchBar}>
           <Text style={styles.searchTxt}>Search</Text>
@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 24,
     fontWeight: "700",
-    color: Colors.primary,
+    color: "#4caf91",
   },
   searchBar: {
     flex: 1,

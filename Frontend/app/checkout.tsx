@@ -460,7 +460,6 @@ const styles = StyleSheet.create({
     shadowRadius: 2.22,
     elevation: 3,
   },
-  /** Header */
   header: {
     flexDirection: "row",
     alignItems: "center",

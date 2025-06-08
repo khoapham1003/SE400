@@ -9,6 +9,7 @@ import {
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import ProductItem from "@/components/ProductItem";
+import { ProductType } from "@/types/type";
 
 type Props = {
   products: ProductType[];
@@ -65,10 +66,6 @@ const FlashSale = ({ products }: Props) => {
           <View style={styles.timer}>
             <Text style={styles.title}>Flash Sale</Text>
           </View>
-          {/* <View style={styles.timer}>
-            <Ionicons name='time-outline' size={16} color={Colors.black}/>
-            <Text style={styles.timerTxt}>{`${formatTime(timeUnits.days)}:${formatTime(timeUnits.hours)}:${formatTime(timeUnits.minutes)}:${formatTime(timeUnits.seconds)}`}</Text>
-          </View> */}
         </View>
         <TouchableOpacity>
           <Text style={styles.titleBtn}>See All</Text>
