@@ -69,17 +69,16 @@ const CartScreen = ({ thisUser }: Props) => {
     } catch (error: any) {
       // Handle 404 error (empty cart) gracefully
       if (error.response?.status === 404) {
-        // Empty cart is normal - just set empty array
-        setCartItems([]);
-        setSelectedItems([]);
-        console.log("Cart is empty - this is normal");
-      } else {
-        // Only log other errors
-        console.error(
-          "Error fetching Cart data:",
-          error?.response?.data || error.message
-        );
-      }
+            setCartItems([]);
+            setSelectedItems([]);
+            // Don't log anything for empty cart - this is expected behavior
+          } else {
+            // Only log unexpected errors
+            console.error(
+              "Unexpected error fetching Cart data:",
+              error?.response?.data || error.message
+            );
+          }
     }
     setIsLoading(false);
   };
