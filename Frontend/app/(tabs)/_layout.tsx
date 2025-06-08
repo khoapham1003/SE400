@@ -1,7 +1,11 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Tabs } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { TabBar } from "@/components/TabBar";
+import { Personal_IP } from "@/constants/ip";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { CartItemType } from "@/types/type";
 
 export default function TabLayout() {
   return (
@@ -28,9 +32,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="orderhistory"
         options={{
-          title: "Order History",
+          title: "Your Order",
           // tabBarIcon: ({ color }) => (
           //   <Ionicons name="notifications-outline" size={22} color={color} />
           // ),

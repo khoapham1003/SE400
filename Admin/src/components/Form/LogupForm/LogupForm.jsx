@@ -72,7 +72,7 @@ function Logup() {
         message.error(response.json);
       } else {
         message.success(`Đăng ký tài khoản thành công!`);
-        navigate(`/sign_in`);
+        navigate(`/`);
       }
     } catch (error) {
       console.error("Error sign up:", error);
@@ -223,7 +223,7 @@ function Logup() {
           </span>
           <a
             className="logup_nav"
-            href="/sign_in"
+            href="/"
             style={{ color: "#CF4330", fontSize: "0.75rem" }}
           >
             Đăng nhập

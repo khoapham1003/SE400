@@ -8,7 +8,7 @@ export const icon = {
   explore: ({ color }: { color: string }) => (
     <Ionicons name="search-outline" size={22} color={color} />
   ),
-  notifications: ({ color }: { color: string }) => (
+  orderhistory: ({ color }: { color: string }) => (
     <Ionicons name="cube-outline" size={22} color={color} />
   ),
   cart: ({ color }: { color: string }) => (

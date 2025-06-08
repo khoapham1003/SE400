@@ -67,18 +67,18 @@ const ProfileScreen = ({ thisUser }: Props) => {
   }, [userId, jwtToken]);
 
   const handleEditProfile = () => {
-    console.log('ProfileScreen - userId:', userId);
-    console.log('ProfileScreen - userData:', userData);
+    console.log("ProfileScreen - userId:", userId);
+    console.log("ProfileScreen - userData:", userData);
 
     router.push({
-      pathname: '/EditProfile',
+      pathname: "/EditProfile",
       params: {
         id: userId,
-        firstName: userData?.firstName || '',
-        middleName: userData?.middleName || '',
-        lastName: userData?.lastName || '',
-        phoneNumber: userData?.phoneNumber || '',
-      }
+        firstName: userData?.firstName || "",
+        middleName: userData?.middleName || "",
+        lastName: userData?.lastName || "",
+        phoneNumber: userData?.phoneNumber || "",
+      },
     });
   };
 
@@ -123,49 +123,38 @@ const ProfileScreen = ({ thisUser }: Props) => {
     <>
       <Stack.Screen options={{ headerShown: true, headerTransparent: true }} />
       <View style={[styles.container, { marginTop: headerHeight }]}>
-        <View style={{ alignItems: "center" }}>
-          {/* <Image
+        <View style={{ alignItems: "center", marginTop: 24 }}>
+          <Image
             style={styles.userImg}
             source={{
-              // uri: thisUser?.picture,
-              uri: "https://xsgames.co/randomusers/avatar.php?g=pixel&key=1",
+              uri: "https://inkythuatso.com/uploads/thumbnails/800/2023/03/9-anh-dai-dien-trang-inkythuatso-03-15-27-03.jpg",
             }}
-          /> */}
+          />
           <Text style={styles.userName}>{userData?.firstName}</Text>
+          <Text style={styles.userSubtitle}>{userData?.email}</Text>
         </View>
+
         <View style={styles.buttonWrapper}>
-          <TouchableOpacity style={styles.button} onPress={() => router.push('/notifications')}>
-            <Ionicons name="person-outline" size={20} color={Colors.black} />
-            <Text style={styles.buttonText}>Your Order</Text>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/(tabs)/orderhistory")}
+          >
+            <Ionicons name="person-outline" size={22} color={Colors.primary} />
+            <Text style={styles.buttonText}>Your Orders</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.button}>
-            <Ionicons name="card-outline" size={20} color={Colors.black} />
-            <Text style={styles.buttonText}>Payment History</Text>
+
+          <TouchableOpacity
+            style={styles.button}
+            onPress={() => router.push("/(tabs)/cart")}
+          >
+            <Ionicons name="cart-outline" size={22} color={Colors.primary} />
+            <Text style={styles.buttonText}>Your Cart</Text>
           </TouchableOpacity>
+
           <TouchableOpacity style={styles.button} onPress={handleEditProfile}>
-            <Ionicons name="pencil-outline" size={20} color={Colors.black} />
+            <Ionicons name="pencil-outline" size={22} color={Colors.primary} />
             <Text style={styles.buttonText}>Edit Profile</Text>
           </TouchableOpacity>
-          {/* <TouchableOpacity style={styles.button}>
-            <Ionicons name="heart-outline" size={20} color={Colors.black} />
-            <Text style={styles.buttonText}>Your Wishlist</Text>
-          </TouchableOpacity> */}
-          {/* <TouchableOpacity style={styles.button}>
-            <Ionicons name="gift-outline" size={20} color={Colors.black} />
-            <Text style={styles.buttonText}>Reward Point</Text>
-          </TouchableOpacity> */}
-          {/* <TouchableOpacity style={styles.button}>
-            <Ionicons
-              name="help-circle-outline"
-              size={20}
-              color={Colors.black}
-            />
-            <Text style={styles.buttonText}>Customer Support</Text>
-          </TouchableOpacity> */}
-          {/* <TouchableOpacity style={styles.button}>
-            <Ionicons name="settings-outline" size={20} color={Colors.black} />
-            <Text style={styles.buttonText}>Settings</Text>
-          </TouchableOpacity> */}
           <TouchableOpacity style={styles.button} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color={Colors.black} />
             <Text style={styles.buttonText}>Logout</Text>
@@ -181,35 +170,52 @@ export default ProfileScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
+    paddingHorizontal: 24,
+    backgroundColor: "#F9FAFB",
   },
   userName: {
-    fontSize: 20,
-    fontWeight: "500",
+    fontSize: 22,
+    fontWeight: "600",
     color: Colors.black,
-    marginTop: 10,
-  },
-  buttonWrapper: {
-    marginTop: 20,
-    gap: 10,
-  },
-  button: {
-    padding: 10,
-    borderTopColor: Colors.lightGray,
-    borderWidth: 1,
-    borderRadius: 5,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  buttonText: {
-    fontSize: 14,
-    fontWeight: "400",
-    color: Colors.black,
+    marginTop: 12,
   },
   userImg: {
-    width: 100,
-    height: 100,
-    borderRadius: 100,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 3,
+    borderColor: Colors.primary, // tuỳ theo màu thương hiệu của bạn
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  userSubtitle: {
+    fontSize: 14,
+    color: Colors.gray,
+    marginTop: 4,
+  },
+  buttonWrapper: {
+    marginTop: 32,
+    gap: 14,
+  },
+  button: {
+    padding: 16,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: Colors.black,
   },
 });

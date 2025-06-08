@@ -101,7 +101,7 @@ function AppRoutes() {
                     </Layout>
                   )
                 ) : (
-                  <Navigate to="/sign_in" />
+                  <Navigate to="/" />
                 )
               }
             />

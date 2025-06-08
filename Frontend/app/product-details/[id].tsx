@@ -258,7 +258,9 @@ const ProductDetails = (props: Props) => {
               <View style={styles.priceWrapper}>
                 <Text style={styles.price}>${product.price}</Text>
                 <View style={styles.priceDiscount}>
-                  <Text style={styles.priceDiscountText}>6% Off</Text>
+                  <Text style={styles.priceDiscountText}>
+                    {product.discount}% Off
+                  </Text>
                 </View>
               </View>
               <Text style={styles.description}>{product.content}</Text>
@@ -350,11 +352,6 @@ const ProductDetails = (props: Props) => {
           <Ionicons name="cart-outline" size={20} color={Colors.primary} />
           <Text style={[styles.buttonText, { color: Colors.primary }]}>
             Add to Cart
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.buttonBuyNow]}>
-          <Text style={[styles.buttonText, { color: Colors.white }]}>
-            Buy Now
           </Text>
         </TouchableOpacity>
       </View>

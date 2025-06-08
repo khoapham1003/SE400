@@ -48,6 +48,14 @@ function OrderAdmin() {
   useEffect(() => {
     fetchProductData();
     fetchOrderData();
+
+    const interval = setInterval(() => {
+      fetchProductData();
+      fetchOrderData();
+    }, 60000);
+
+    // Cleanup để tránh memory leak
+    return () => clearInterval(interval);
   }, []);
 
   const fetchOrderData = async () => {
@@ -460,7 +468,7 @@ function OrderAdmin() {
                     borderColor: "rgba(255, 159, 64, 1)",
                     borderWidth: 1,
                   },
-                  dataType === "orderCount" &&  {
+                  dataType === "orderCount" && {
                     label: "Số Lượng Đơn Hàng Bán Ra (Theo Tháng)",
                     data: chartData.monthly.datasets[1].data,
                     backgroundColor: "rgba(54, 162, 235, 0.6)",
@@ -487,21 +495,21 @@ function OrderAdmin() {
               data={{
                 labels: chartData.yearly.labels,
                 datasets: [
-                  dataType === "totalPrice" &&   {
+                  dataType === "totalPrice" && {
                     label: "Tổng Giá Trị Bán Ra (Theo Năm)",
                     data: chartData.yearly.datasets[0].data,
                     backgroundColor: "rgba(54, 162, 235, 0.6)",
                     borderColor: "rgba(54, 162, 235, 1)",
                     borderWidth: 1,
                   },
-                  dataType === "orderCount" &&   {
+                  dataType === "orderCount" && {
                     label: "Số Lượng Đơn Hàng Bán Ra (Theo Năm)",
                     data: chartData.yearly.datasets[1].data,
                     backgroundColor: "rgba(255, 206, 86, 0.6)",
                     borderColor: "rgba(255, 206, 86, 1)",
                     borderWidth: 1,
                   },
-                  dataType === "productCount" &&   {
+                  dataType === "productCount" && {
                     label: "Số Lượng Sản Phẩm Bán Ra (Theo Năm)",
                     data: chartData.yearly.datasets[2].data,
                     backgroundColor: "rgba(75, 192, 192, 0.6)",

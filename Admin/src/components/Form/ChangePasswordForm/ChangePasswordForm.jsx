@@ -75,7 +75,7 @@ function ChangePassword() {
         }
       } else {
         message.success("Cập nhật mật khẩu thành công!");
-        navigate(`/sign_in`);
+        navigate(`/`);
         window.location.reload();
       }
     } catch (error) {

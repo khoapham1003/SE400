@@ -17,7 +17,8 @@ import { useHeaderHeight } from "@react-navigation/elements";
 import { Colors } from "@/constants/Colors";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInDown } from "react-native-reanimated";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { formatDate, formatPrice } from "@/utils/format";
 
 type AddressType = {
   line1: string;
@@ -40,8 +41,8 @@ type OrderType = {
   grandTotal: number;
 };
 
-type SortOption = 'newest' | 'oldest' | 'price-high' | 'price-low';
-type FilterOption = 'all' | 'completed' | 'pending' | 'processing' | 'cancelled';
+type SortOption = "newest" | "oldest" | "price-high" | "price-low";
+type FilterOption = "all" | "completed" | "pending";
 
 const OrderHistoryScreen = () => {
   const [orders, setOrders] = useState<OrderType[]>([]);
@@ -50,8 +51,8 @@ const OrderHistoryScreen = () => {
   const [error, setError] = useState<string | null>(null);
 
   // Sort and Filter states
-  const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [filterBy, setFilterBy] = useState<FilterOption>('all');
+  const [sortBy, setSortBy] = useState<SortOption>("newest");
+  const [filterBy, setFilterBy] = useState<FilterOption>("all");
   const [showSortModal, setShowSortModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
 
@@ -86,7 +87,6 @@ const OrderHistoryScreen = () => {
 
       const orderData = response.data.data || response.data || [];
       setOrders(orderData);
-
     } catch (error) {
       console.error("Error fetching order history:", error);
       setError("Failed to load order history. Please try again.");
@@ -100,22 +100,26 @@ const OrderHistoryScreen = () => {
     let filtered = orders;
 
     // Apply filter
-    if (filterBy !== 'all') {
-      filtered = orders.filter(order =>
-        order.status.toLowerCase() === filterBy.toLowerCase()
+    if (filterBy !== "all") {
+      filtered = orders.filter(
+        (order) => order.status.toLowerCase() === filterBy.toLowerCase()
       );
     }
 
     // Apply sort
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
-        case 'newest':
-          return new Date(b.createAt).getTime() - new Date(a.createAt).getTime();
-        case 'oldest':
-          return new Date(a.createAt).getTime() - new Date(b.createAt).getTime();
-        case 'price-high':
+        case "newest":
+          return (
+            new Date(b.createAt).getTime() - new Date(a.createAt).getTime()
+          );
+        case "oldest":
+          return (
+            new Date(a.createAt).getTime() - new Date(b.createAt).getTime()
+          );
+        case "price-high":
           return b.grandTotal - a.grandTotal;
-        case 'price-low':
+        case "price-low":
           return a.grandTotal - b.grandTotal;
         default:
           return 0;
@@ -133,14 +137,14 @@ const OrderHistoryScreen = () => {
 
   const getStatusColor = (status: string) => {
     switch (status?.toUpperCase()) {
-      case 'COMPLETED':
-        return '#22c55e';
-      case 'PENDING':
-        return '#f59e0b';
-      case 'PROCESSING':
-        return '#3b82f6';
-      case 'CANCELLED':
-        return '#ef4444';
+      case "COMPLETED":
+        return "#22c55e";
+      case "PENDING":
+        return "#f59e0b";
+      case "PROCESSING":
+        return "#3b82f6";
+      case "CANCELLED":
+        return "#ef4444";
       default:
         return Colors.gray;
     }
@@ -148,57 +152,47 @@ const OrderHistoryScreen = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status?.toUpperCase()) {
-      case 'COMPLETED':
-        return 'checkmark-circle';
-      case 'PENDING':
-        return 'time';
-      case 'PROCESSING':
-        return 'refresh';
-      case 'CANCELLED':
-        return 'close-circle';
+      case "COMPLETED":
+        return "checkmark-circle";
+      case "PENDING":
+        return "time";
+      case "PROCESSING":
+        return "refresh";
+      case "CANCELLED":
+        return "close-circle";
       default:
-        return 'help-circle';
+        return "help-circle";
     }
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const formatPrice = (price: number) => {
-    return `$${price.toFixed(2)}`;
   };
 
   const getSortLabel = (sort: SortOption) => {
     switch (sort) {
-      case 'newest': return 'Newest First';
-      case 'oldest': return 'Oldest First';
-      case 'price-high': return 'Price: High to Low';
-      case 'price-low': return 'Price: Low to High';
+      case "newest":
+        return "Newest First";
+      case "oldest":
+        return "Oldest First";
+      case "price-high":
+        return "Price: High to Low";
+      case "price-low":
+        return "Price: Low to High";
     }
   };
 
   const getFilterLabel = (filter: FilterOption) => {
     switch (filter) {
-      case 'all': return 'All Orders';
-      case 'completed': return 'Completed';
-      case 'pending': return 'Pending';
-      case 'processing': return 'Processing';
-      case 'cancelled': return 'Cancelled';
+      case "all":
+        return "All Orders";
+      case "completed":
+        return "Completed";
+      case "pending":
+        return "Pending";
     }
   };
 
   const getFilterCount = (filter: FilterOption) => {
-    if (filter === 'all') return orders.length;
-    return orders.filter(order =>
-      order.status.toLowerCase() === filter.toLowerCase()
+    if (filter === "all") return orders.length;
+    return orders.filter(
+      (order) => order.status.toLowerCase() === filter.toLowerCase()
     ).length;
   };
 
@@ -221,16 +215,26 @@ const OrderHistoryScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {(['newest', 'oldest', 'price-high', 'price-low'] as SortOption[]).map((option) => (
+          {(
+            ["newest", "oldest", "price-high", "price-low"] as SortOption[]
+          ).map((option) => (
             <TouchableOpacity
               key={option}
-              style={[styles.modalOption, sortBy === option && styles.selectedOption]}
+              style={[
+                styles.modalOption,
+                sortBy === option && styles.selectedOption,
+              ]}
               onPress={() => {
                 setSortBy(option);
                 setShowSortModal(false);
               }}
             >
-              <Text style={[styles.optionText, sortBy === option && styles.selectedOptionText]}>
+              <Text
+                style={[
+                  styles.optionText,
+                  sortBy === option && styles.selectedOptionText,
+                ]}
+              >
                 {getSortLabel(option)}
               </Text>
               {sortBy === option && (
@@ -262,20 +266,30 @@ const OrderHistoryScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {(['all', 'completed', 'pending', 'processing', 'cancelled'] as FilterOption[]).map((option) => (
+          {(["all", "completed", "pending"] as FilterOption[]).map((option) => (
             <TouchableOpacity
               key={option}
-              style={[styles.modalOption, filterBy === option && styles.selectedOption]}
+              style={[
+                styles.modalOption,
+                filterBy === option && styles.selectedOption,
+              ]}
               onPress={() => {
                 setFilterBy(option);
                 setShowFilterModal(false);
               }}
             >
               <View style={styles.optionLeft}>
-                <Text style={[styles.optionText, filterBy === option && styles.selectedOptionText]}>
+                <Text
+                  style={[
+                    styles.optionText,
+                    filterBy === option && styles.selectedOptionText,
+                  ]}
+                >
                   {getFilterLabel(option)}
                 </Text>
-                <Text style={styles.optionCount}>({getFilterCount(option)})</Text>
+                <Text style={styles.optionCount}>
+                  ({getFilterCount(option)})
+                </Text>
               </View>
               {filterBy === option && (
                 <Ionicons name="checkmark" size={20} color={Colors.primary} />
@@ -291,7 +305,8 @@ const OrderHistoryScreen = () => {
     <View style={styles.controlsContainer}>
       <View style={styles.resultsInfo}>
         <Text style={styles.resultsText}>
-          {filteredAndSortedOrders.length} {filteredAndSortedOrders.length === 1 ? 'order' : 'orders'}
+          {filteredAndSortedOrders.length}{" "}
+          {filteredAndSortedOrders.length === 1 ? "order" : "orders"}
         </Text>
       </View>
 
@@ -302,21 +317,31 @@ const OrderHistoryScreen = () => {
         >
           <Ionicons name="funnel-outline" size={18} color={Colors.primary} />
           <Text style={styles.controlButtonText}>Filter</Text>
-          {filterBy !== 'all' && <View style={styles.activeIndicator} />}
+          {filterBy !== "all" && <View style={styles.activeIndicator} />}
         </TouchableOpacity>
 
         <TouchableOpacity
           style={styles.controlButton}
           onPress={() => setShowSortModal(true)}
         >
-          <Ionicons name="swap-vertical-outline" size={18} color={Colors.primary} />
+          <Ionicons
+            name="swap-vertical-outline"
+            size={18}
+            color={Colors.primary}
+          />
           <Text style={styles.controlButtonText}>Sort</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
-  const renderOrderItem = ({ item, index }: { item: OrderType; index: number }) => (
+  const renderOrderItem = ({
+    item,
+    index,
+  }: {
+    item: OrderType;
+    index: number;
+  }) => (
     <Animated.View
       style={styles.orderCard}
       entering={FadeInDown.delay(100 + index * 50).duration(400)}
@@ -326,13 +351,20 @@ const OrderHistoryScreen = () => {
           <Text style={styles.orderNumber}>Order #{item.id}</Text>
           <Text style={styles.orderDate}>{formatDate(item.createAt)}</Text>
         </View>
-        <View style={[styles.statusContainer, { backgroundColor: getStatusColor(item.status) + '20' }]}>
+        <View
+          style={[
+            styles.statusContainer,
+            { backgroundColor: getStatusColor(item.status) + "20" },
+          ]}
+        >
           <Ionicons
             name={getStatusIcon(item.status)}
             size={16}
             color={getStatusColor(item.status)}
           />
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>
+          <Text
+            style={[styles.statusText, { color: getStatusColor(item.status) }]}
+          >
             {item.status}
           </Text>
         </View>
@@ -348,20 +380,24 @@ const OrderHistoryScreen = () => {
           {item.totalDiscount > 0 && (
             <View style={styles.priceRow}>
               <Text style={styles.priceLabel}>Discount:</Text>
-              <Text style={[styles.priceValue, styles.discountText]}>-{formatPrice(item.totalDiscount)}</Text>
+              <Text style={[styles.priceValue, styles.discountText]}>
+                -{formatPrice(item.totalDiscount)}
+              </Text>
             </View>
           )}
 
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Shipping Fee:</Text>
             <Text style={styles.priceValue}>
-              {item.shippingFee > 0 ? formatPrice(item.shippingFee) : 'Free'}
+              {item.shippingFee > 0 ? formatPrice(item.shippingFee) : "Free"}
             </Text>
           </View>
 
           <View style={[styles.priceRow, styles.totalRow]}>
             <Text style={styles.totalLabel}>Grand Total:</Text>
-            <Text style={styles.totalAmount}>{formatPrice(item.grandTotal)}</Text>
+            <Text style={styles.totalAmount}>
+              {formatPrice(item.grandTotal)}
+            </Text>
           </View>
         </View>
 
@@ -375,7 +411,7 @@ const OrderHistoryScreen = () => {
             <Text style={styles.addressPhone}>{item.address.phone}</Text>
             <Text style={styles.addressText}>
               {item.address.line1}
-              {item.address.line2 ? `, ${item.address.line2}` : ''}
+              {item.address.line2 ? `, ${item.address.line2}` : ""}
             </Text>
             <Text style={styles.addressText}>
               {item.address.city}, {item.address.province}
@@ -395,25 +431,32 @@ const OrderHistoryScreen = () => {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Ionicons
-        name={filterBy === 'all' ? "receipt-outline" : "search-outline"}
+        name={filterBy === "all" ? "receipt-outline" : "search-outline"}
         size={80}
         color={Colors.lightGray}
       />
       <Text style={styles.emptyTitle}>
-        {filterBy === 'all' ? 'No Orders Yet' : 'No Orders Found'}
+        {filterBy === "all" ? "No Orders Yet" : "No Orders Found"}
       </Text>
       <Text style={styles.emptyMessage}>
-        {filterBy === 'all'
-          ? 'Your order history will appear here once you place your first order.'
-          : `No ${filterBy} orders found. Try adjusting your filter.`
-        }
+        {filterBy === "all"
+          ? "Your order history will appear here once you place your first order."
+          : `No ${filterBy} orders found. Try adjusting your filter.`}
       </Text>
-      {filterBy === 'all' ? (
-        <TouchableOpacity style={styles.shopButton} onPress={() => {/* Navigate to shop */}}>
+      {filterBy === "all" ? (
+        <TouchableOpacity
+          style={styles.shopButton}
+          onPress={() => {
+            /* Navigate to shop */
+          }}
+        >
           <Text style={styles.shopButtonText}>Start Shopping</Text>
         </TouchableOpacity>
       ) : (
-        <TouchableOpacity style={styles.shopButton} onPress={() => setFilterBy('all')}>
+        <TouchableOpacity
+          style={styles.shopButton}
+          onPress={() => setFilterBy("all")}
+        >
           <Text style={styles.shopButtonText}>Show All Orders</Text>
         </TouchableOpacity>
       )}
@@ -437,7 +480,7 @@ const OrderHistoryScreen = () => {
         options={{
           headerShown: true,
           headerTransparent: true,
-          title: "Order History"
+          title: "Your Order",
         }}
       />
       <View style={[styles.container, { marginTop: headerHeight }]}>
@@ -456,7 +499,11 @@ const OrderHistoryScreen = () => {
               renderItem={renderOrderItem}
               keyExtractor={(item) => item.id.toString()}
               showsVerticalScrollIndicator={false}
-              contentContainerStyle={filteredAndSortedOrders.length === 0 ? styles.emptyList : styles.list}
+              contentContainerStyle={
+                filteredAndSortedOrders.length === 0
+                  ? styles.emptyList
+                  : styles.list
+              }
               ListEmptyComponent={renderEmptyState}
               refreshControl={
                 <RefreshControl
@@ -481,12 +528,12 @@ export default OrderHistoryScreen;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: "#f8f9fa",
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   loadingText: {
     marginTop: 16,
@@ -494,14 +541,14 @@ const styles = StyleSheet.create({
     color: Colors.gray,
   },
   controlsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   resultsInfo: {
     flex: 1,
@@ -509,31 +556,31 @@ const styles = StyleSheet.create({
   resultsText: {
     fontSize: 14,
     color: Colors.gray,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   controls: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: 12,
   },
   controlButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: Colors.primary,
-    backgroundColor: 'white',
-    position: 'relative',
+    backgroundColor: "white",
+    position: "relative",
   },
   controlButtonText: {
     fontSize: 14,
     color: Colors.primary,
-    fontWeight: '500',
+    fontWeight: "500",
     marginLeft: 4,
   },
   activeIndicator: {
-    position: 'absolute',
+    position: "absolute",
     top: -2,
     right: -2,
     width: 8,
@@ -543,56 +590,56 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   modalContent: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 16,
-    width: '100%',
+    width: "100%",
     maxWidth: 400,
-    maxHeight: '80%',
+    maxHeight: "80%",
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   modalTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
   },
   modalOption: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f8f9fa',
+    borderBottomColor: "#f8f9fa",
   },
   selectedOption: {
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: Colors.primary + "10",
   },
   optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
   },
   optionText: {
     fontSize: 16,
     color: Colors.black,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   selectedOptionText: {
     color: Colors.primary,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   optionCount: {
     fontSize: 14,
@@ -606,29 +653,29 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   orderCard: {
-    backgroundColor: 'white',
+    backgroundColor: "white",
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   orderHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   orderHeaderLeft: {
     flex: 1,
   },
   orderNumber: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginBottom: 4,
   },
@@ -637,17 +684,17 @@ const styles = StyleSheet.create({
     color: Colors.gray,
   },
   statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 4,
-    textTransform: 'capitalize',
+    textTransform: "capitalize",
   },
   orderDetails: {
     padding: 16,
@@ -656,12 +703,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 8,
   },
   priceLabel: {
@@ -670,29 +717,29 @@ const styles = StyleSheet.create({
   },
   priceValue: {
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: "500",
     color: Colors.black,
   },
   discountText: {
-    color: '#22c55e',
+    color: "#22c55e",
   },
   totalRow: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
   },
   addressContainer: {
     marginTop: 4,
   },
   addressHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   addressTitle: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginLeft: 8,
   },
@@ -701,7 +748,7 @@ const styles = StyleSheet.create({
   },
   addressName: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginBottom: 2,
   },
@@ -716,28 +763,28 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   viewDetailsButton: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 12,
     borderTopWidth: 1,
-    borderTopColor: '#f0f0f0',
+    borderTopColor: "#f0f0f0",
   },
   viewDetailsText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.primary,
     marginRight: 4,
   },
   emptyContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 32,
   },
   emptyTitle: {
     fontSize: 24,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginTop: 16,
     marginBottom: 8,
@@ -745,7 +792,7 @@ const styles = StyleSheet.create({
   emptyMessage: {
     fontSize: 16,
     color: Colors.gray,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
     marginBottom: 32,
   },
@@ -757,18 +804,18 @@ const styles = StyleSheet.create({
   },
   shopButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
+    fontWeight: "600",
+    color: "white",
   },
   errorContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 32,
   },
   errorTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
     marginTop: 16,
     marginBottom: 8,
@@ -776,7 +823,7 @@ const styles = StyleSheet.create({
   errorMessage: {
     fontSize: 16,
     color: Colors.gray,
-    textAlign: 'center',
+    textAlign: "center",
     lineHeight: 24,
     marginBottom: 24,
   },
@@ -788,17 +835,17 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
+    fontWeight: "600",
+    color: "white",
   },
   totalLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     color: Colors.black,
   },
   totalAmount: {
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: "700",
     color: Colors.primary,
   },
 });

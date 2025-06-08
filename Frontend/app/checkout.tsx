@@ -1,8 +1,12 @@
+import InputField from "@/components/InputField";
+import { Colors } from "@/constants/Colors";
 import { Personal_IP } from "@/constants/ip";
 import { CartItemType, InProcessItemType } from "@/types/type";
+import { formatPrice } from "@/utils/format";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import React, { useEffect } from "react";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   StyleSheet,
   View,
@@ -14,45 +18,7 @@ import {
 } from "react-native";
 import FeatherIcon from "react-native-vector-icons/Feather";
 
-//TEMP DATA
-const paymentMethods = [
-  {
-    id: "paypal",
-    label: "PayPal",
-    img: "https://assets.withfra.me/credit_cards/paypal.png",
-  },
-  {
-    id: "amex-89001",
-    label: "Amex ••••89001",
-    img: "https://assets.withfra.me/credit_cards/amex.png",
-  },
-  {
-    id: "visa-3021",
-    label: "Visa ••••3021",
-    img: "https://assets.withfra.me/credit_cards/visa.png",
-  },
-];
-
-const cartProducts = [
-  {
-    id: "1",
-    name: "Product 1",
-    price: 9.99,
-    quantity: 1,
-    image: "https://via.placeholder.com/60",
-  },
-  {
-    id: "2",
-    name: "Product 2",
-    price: 10.0,
-    quantity: 2,
-    image: "https://via.placeholder.com/60",
-  },
-];
-//TEMP DATA==END
-
 const ProductList = ({ products }: { products: InProcessItemType[] }) => {
-  console.log("products", products);
   return (
     <View
       style={{
@@ -68,7 +34,7 @@ const ProductList = ({ products }: { products: InProcessItemType[] }) => {
         Products
       </Text>
 
-      {products.map(({ id, productVariant, price, quantity }) => (
+      {products.map(({ id, productVariant, price, discount, quantity }) => (
         <View
           key={id}
           style={{
@@ -90,7 +56,6 @@ const ProductList = ({ products }: { products: InProcessItemType[] }) => {
               {productVariant.product?.title}
             </Text>
 
-            {/* Thêm Size và Color */}
             <Text style={{ fontSize: 14, color: "#555" }}>
               Color: {productVariant.color?.name || "N/A"} | Size:{" "}
               {productVariant.size?.name || "N/A"}
@@ -98,13 +63,23 @@ const ProductList = ({ products }: { products: InProcessItemType[] }) => {
 
             <Text style={{ fontSize: 14, color: "#777" }}>Qty: {quantity}</Text>
           </View>
-
-          <Text style={{ fontSize: 16, fontWeight: "600" }}>
-            {Math.abs(price * quantity).toLocaleString("vi-VN", {
-              style: "currency",
-              currency: "VND",
-            })}
-          </Text>
+          <View>
+            <Text style={{ fontSize: 16, fontWeight: "600" }}>
+              {formatPrice(price * (1 - discount / 100) * quantity)}
+            </Text>
+            {!(discount === 0) && (
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: "500",
+                  color: "#555",
+                  textDecorationLine: "line-through",
+                }}
+              >
+                {formatPrice(price * quantity)}
+              </Text>
+            )}
+          </View>
         </View>
       ))}
     </View>
@@ -112,20 +87,36 @@ const ProductList = ({ products }: { products: InProcessItemType[] }) => {
 };
 
 const Checkout = () => {
-  const [form, setForm] = React.useState({
-    paymentMethod: paymentMethods[0].id,
-  });
   const [jwtToken, setJwtToken] = React.useState<string | null>(null);
   const [userId, setUserId] = React.useState<string | null>(null);
   const [orderId, setOrderId] = React.useState<string | null>(null);
   const [cartId, setCartId] = React.useState<string | null>(null);
 
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [totalAmount, setTotalAmount] = React.useState(0);
+  const [totalDiscount, setTotalDiscount] = React.useState(0);
+  const [totalQuantity, setTotalQuantity] = React.useState(0);
+  const [totalPriceWithDiscount, setTotalPriceWithDiscount] = React.useState(0);
+  const deliveryFee = 30000;
+
   const [items, setItems] = React.useState<InProcessItemType[]>([]);
+
+  const [lastName, setLastName] = useState("Lương Lê");
+  const [middleName, setMiddleName] = useState("Duy");
+  const [firstName, setFirstName] = useState("Tiến");
+  const [phoneNumber, setPhoneNumber] = useState("0123456789");
+  const [email, setEmail] = useState("tien1234@gmail.com");
+  const [line1, setLine1] = useState("1015 Thánh Gióng");
+  const [line2, setLine2] = useState("");
+  const [city, setCity] = useState("TP Thủ Đức");
+  const [province, setProvince] = useState("TP Hồ Chi Minh");
+  const [country, setCountry] = useState("Việt Nam");
 
   const loadAuthData = async () => {
     const token = await AsyncStorage.getItem("access_token");
     const user = await AsyncStorage.getItem("userId");
-    const cart = await AsyncStorage.getItem("CartId");
+    const cart = await AsyncStorage.getItem("cartId");
     const orderId = await AsyncStorage.getItem("orderId");
     if (token && user) {
       setJwtToken(token);
@@ -137,7 +128,20 @@ const Checkout = () => {
   useEffect(() => {
     loadAuthData();
   }, []);
+  useEffect(() => {
+    const loadSummary = async () => {
+      const summaryStr = await AsyncStorage.getItem("orderSummary");
+      if (summaryStr) {
+        const summary = JSON.parse(summaryStr);
+        setTotalAmount(summary.totalAmount);
+        setTotalDiscount(summary.totalDiscount);
+        setTotalQuantity(summary.totalQuantity);
+        setTotalPriceWithDiscount(summary.totalPriceWithDiscount);
+      }
+    };
 
+    loadSummary();
+  }, []);
   const fetchCheckOutData = async () => {
     try {
       const URL = `http://${Personal_IP.data}:3000/order-item/orderdata/${orderId}`;
@@ -153,7 +157,6 @@ const Checkout = () => {
 
       const data = await response;
       setItems(data.data);
-      console.log("items", items);
       return data;
     } catch (error) {
       console.error("Error fetching product data:", error);
@@ -164,6 +167,78 @@ const Checkout = () => {
     if (!jwtToken || !orderId) return;
     fetchCheckOutData();
   }, [jwtToken, orderId]);
+
+  const handlePlaceOrder = async () => {
+    try {
+      setIsLoading(true);
+      const data = {
+        lastName: lastName,
+        middleName: middleName,
+        firstName: firstName,
+        phoneNumber: phoneNumber,
+        email: email,
+        line1: line1,
+        line2: line2,
+        city: city,
+        province: province,
+        country: country,
+
+        status: "PENDING",
+        subTotal: totalAmount,
+        totalDiscount: totalDiscount,
+        shippingFee: deliveryFee,
+        grandTotal: totalPriceWithDiscount,
+      };
+      const URL = `http://${Personal_IP.data}:3000/orders/${cartId}/${orderId}/complete`;
+      const response = await fetch(URL, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${jwtToken}`,
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      console.log("Order ID:", orderId);
+      const stored = await AsyncStorage.getItem("cartitemsId");
+      console.log("stored", stored);
+
+      const cartitemsIdArray: number[] = stored ? JSON.parse(stored) : [];
+
+      for (const cartItemId of cartitemsIdArray) {
+        await removeCartItem(cartItemId);
+      }
+      router.push("/(tabs)/cart");
+      console.log("Order placed successfully!");
+    } catch (error) {
+      console.error("Error occurs while place order:");
+    }
+    setIsLoading(false);
+  };
+
+  const removeCartItem = async (cartItemId: number) => {
+    try {
+      const response = await fetch(
+        `http://${Personal_IP.data}:3000/cartitem/delete-cartitem/${cartItemId}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${jwtToken}`,
+          },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+    } catch (error) {
+      console.error("Error removing cart item:", error);
+    }
+  };
 
   return (
     <View style={{ flex: 1 }}>
@@ -181,7 +256,9 @@ const Checkout = () => {
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal</Text>
 
-              <Text style={styles.summaryPrice}>$19.95</Text>
+              <Text style={styles.summaryPrice}>
+                {formatPrice(totalAmount)}
+              </Text>
             </View>
 
             <View style={styles.summaryRow}>
@@ -191,17 +268,9 @@ const Checkout = () => {
                 <FeatherIcon color="#454545" name="help-circle" size={17} />
               </TouchableOpacity>
 
-              <Text style={styles.summaryPrice}>$3.95</Text>
-            </View>
-
-            <View style={styles.summaryRow}>
-              <Text style={styles.summaryLabel}>Tip</Text>
-
-              <TouchableOpacity>
-                <FeatherIcon color="#454545" name="help-circle" size={17} />
-              </TouchableOpacity>
-
-              <Text style={styles.summaryPrice}>$2.00</Text>
+              <Text style={styles.summaryPrice}>
+                {formatPrice(deliveryFee)}
+              </Text>
             </View>
 
             <View style={styles.summaryRow}>
@@ -211,68 +280,123 @@ const Checkout = () => {
                 <FeatherIcon color="#454545" name="help-circle" size={17} />
               </TouchableOpacity>
 
-              <Text style={styles.summaryPrice}>$3.75</Text>
+              <Text style={styles.summaryPrice}>
+                - {formatPrice(totalDiscount)}
+              </Text>
             </View>
 
             <View style={styles.summaryTotal}>
               <Text style={styles.summaryLabel}>Total</Text>
 
-              <Text style={styles.summaryPriceOld}>$25.90</Text>
+              {!(totalDiscount === 0) && (
+                <Text style={styles.summaryPriceOld}>
+                  {formatPrice(totalAmount)}
+                </Text>
+              )}
 
-              <Text style={styles.summaryPricePrimary}>$22.15</Text>
+              <Text style={styles.summaryPricePrimary}>
+                {formatPrice(totalPriceWithDiscount)}
+              </Text>
             </View>
 
-            <TouchableOpacity style={styles.sectionButton}>
+            <TouchableOpacity
+              style={styles.sectionButton}
+              onPress={() => router.push("/(tabs)/cart")}
+            >
               <FeatherIcon color="#1A1A1A" name="plus" size={14} />
 
               <Text style={styles.sectionButtonText}>Add more items</Text>
             </TouchableOpacity>
           </View>
-
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Shipping Information</Text>
+            <View style={styles.sectionBody}>
+              <View style={styles.shipContainer}>
+                <InputField
+                  placeholder="Last Name"
+                  placeholderTextColor={Colors.gray}
+                  autoCapitalize="none"
+                  style={styles.shipInput}
+                  value={lastName}
+                  onChangeText={setLastName}
+                  keyboardType="default"
+                />
+                <InputField
+                  placeholder="Middle Name"
+                  placeholderTextColor={Colors.gray}
+                  autoCapitalize="none"
+                  style={styles.shipInput}
+                  value={middleName}
+                  onChangeText={setMiddleName}
+                />
+                <InputField
+                  placeholder="First Name"
+                  placeholderTextColor={Colors.gray}
+                  autoCapitalize="none"
+                  style={styles.shipInput}
+                  value={firstName}
+                  onChangeText={setFirstName}
+                />
+                <InputField
+                  placeholder="Phone Number"
+                  placeholderTextColor={Colors.gray}
+                  style={styles.shipInput}
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                />
+                <InputField
+                  placeholder="Phone Number"
+                  placeholderTextColor={Colors.gray}
+                  style={styles.shipInput}
+                  value={email}
+                  onChangeText={setEmail}
+                />
+                <InputField
+                  placeholder="Country"
+                  placeholderTextColor={Colors.gray}
+                  style={styles.shipInput}
+                  value={country}
+                  onChangeText={setCountry}
+                />
+                <InputField
+                  placeholder="Province"
+                  placeholderTextColor={Colors.gray}
+                  style={styles.shipInput}
+                  value={province}
+                  onChangeText={setProvince}
+                />
+                <InputField
+                  placeholder="City"
+                  placeholderTextColor={Colors.gray}
+                  style={styles.shipInput}
+                  value={city}
+                  onChangeText={setCity}
+                />
+                <InputField
+                  placeholder="Address"
+                  placeholderTextColor={Colors.gray}
+                  style={styles.shipInput}
+                  value={line1}
+                  onChangeText={setLine1}
+                  numberOfLines={2}
+                  textAlignVertical="top"
+                />
+              </View>
+            </View>
+          </View>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Payment methods</Text>
-
             <View style={styles.sectionBody}>
-              {paymentMethods.map(({ id, label, img }, index, arr) => {
-                const isFirst = index === 0;
-                const isLast = index === arr.length - 1;
-                const isActive = form.paymentMethod === id;
-
-                return (
-                  <View
-                    key={index}
-                    style={[
-                      styles.radioWrapper,
-                      isActive && styles.radioActive,
-                      isFirst && styles.radioFirst,
-                      isLast && styles.radioLast,
-                    ]}
-                  >
-                    <TouchableOpacity
-                      onPress={() =>
-                        setForm({ ...form, ["paymentMethod"]: id })
-                      }
-                      style={styles.radio}
-                    >
-                      <View
-                        style={[
-                          styles.radioInput,
-                          isActive && styles.radioInputActive,
-                        ]}
-                      />
-
-                      <Image
-                        alt=""
-                        resizeMode="contain"
-                        source={{ uri: img }}
-                        style={styles.radioImg}
-                      />
-
-                      <Text style={styles.radioLabel}>{label}</Text>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
+              <View style={styles.radioWrapper}>
+                <TouchableOpacity
+                  onPress={() => {
+                    // handle onPress
+                  }}
+                  style={styles.radio}
+                >
+                  <Text style={styles.radioLabel}>Cash on Delivery</Text>
+                </TouchableOpacity>
+              </View>
             </View>
 
             <TouchableOpacity
@@ -290,14 +414,19 @@ const Checkout = () => {
       </SafeAreaView>
 
       <View style={styles.overlay}>
+        <Text style={styles.totalAmount}>
+          {formatPrice(totalPriceWithDiscount)}
+        </Text>
         <TouchableOpacity
           onPress={() => {
-            // handle onPress
+            handlePlaceOrder();
           }}
           style={{ flex: 1, paddingHorizontal: 24 }}
         >
           <View style={styles.btn}>
-            <Text style={styles.btnText}>Place Order</Text>
+            <Text style={styles.btnText}>
+              {isLoading ? "Processing..." : "Place Order"}
+            </Text>
           </View>
         </TouchableOpacity>
       </View>
@@ -430,18 +559,17 @@ const styles = StyleSheet.create({
   },
   summaryPriceOld: {
     marginLeft: "auto",
-    fontSize: 15,
+    fontSize: 13,
     fontWeight: "500",
-    color: "#5D5D5D",
+    color: "#555",
     textDecorationLine: "line-through",
   },
   summaryPricePrimary: {
     marginLeft: 6,
-    fontSize: 16,
+    fontSize: 20,
     fontWeight: "600",
-    color: "#000000",
+    color: Colors.black,
   },
-  /** Radio */
   radio: {
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -492,6 +620,16 @@ const styles = StyleSheet.create({
     fontWeight: "500",
     color: "#1d1d1d",
   },
+  shipInput: {
+    backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: "#e5e7e5",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 14,
+  },
+
   /** Button */
   btn: {
     flexDirection: "row",
@@ -510,6 +648,14 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#fff",
     letterSpacing: 0.45,
+  },
+  shipContainer: {
+    paddingHorizontal: 12,
+  },
+  totalAmount: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: Colors.black,
   },
 });
 export default Checkout;
